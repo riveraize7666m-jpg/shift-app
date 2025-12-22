@@ -103,12 +103,20 @@ st.markdown("""
     
     /* サイドバー */
     section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-        border-right: 1px solid var(--neutral-200);
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+        border-right: 1px solid #334155;
     }
     
     section[data-testid="stSidebar"] > div {
         padding-top: 1.5rem;
+    }
+    
+    section[data-testid="stSidebar"] * {
+        color: #e2e8f0;
+    }
+    
+    section[data-testid="stSidebar"] .stMarkdown p {
+        color: #e2e8f0 !important;
     }
     
     /* サイドバーヘッダー */
@@ -167,30 +175,56 @@ st.markdown("""
     .stNumberInput > div > div > input,
     .stSelectbox > div > div > div {
         border-radius: 10px !important;
-        border: 1.5px solid var(--neutral-200) !important;
+        border: 1.5px solid #475569 !important;
         padding: 0.6rem 0.9rem !important;
         font-family: 'Noto Sans JP', sans-serif !important;
         font-size: 0.9rem !important;
         transition: all 0.2s ease !important;
+        background: #1e293b !important;
+        color: #f1f5f9 !important;
     }
     
     .stTextInput > div > div > input:focus,
     .stNumberInput > div > div > input:focus {
-        border-color: var(--primary) !important;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+        border-color: #6366f1 !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+    }
+    
+    .stTextInput > div > div > input::placeholder {
+        color: #64748b !important;
+    }
+    
+    /* セレクトボックス */
+    .stSelectbox > div > div {
+        background: #1e293b !important;
+        color: #f1f5f9 !important;
+    }
+    
+    div[data-baseweb="select"] > div {
+        background: #1e293b !important;
+        border-color: #475569 !important;
+    }
+    
+    div[data-baseweb="select"] span {
+        color: #f1f5f9 !important;
     }
     
     /* エキスパンダー */
     .streamlit-expanderHeader {
-        font-family: 'Noto Sans JP', sans-serif;
-        font-weight: 500;
-        font-size: 0.95rem;
+        font-family: 'Noto Sans JP', sans-serif !important;
+        font-weight: 500 !important;
+        font-size: 0.95rem !important;
         background: #334155 !important;
         border-radius: 12px !important;
         border: 1px solid #475569 !important;
         padding: 0.75rem 1rem !important;
         transition: all 0.2s ease;
-        color: #e2e8f0 !important;
+        color: #f1f5f9 !important;
+    }
+    
+    .streamlit-expanderHeader p {
+        color: #f1f5f9 !important;
+        font-size: 0.95rem !important;
     }
     
     .streamlit-expanderHeader:hover {
@@ -211,6 +245,26 @@ st.markdown("""
         border-top: none !important;
         border-radius: 0 0 12px 12px !important;
         padding: 1rem !important;
+    }
+    
+    /* サイドバー内のすべてのテキストを見えるように */
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"] p,
+    section[data-testid="stSidebar"] span,
+    section[data-testid="stSidebar"] .stMarkdown {
+        color: #e2e8f0 !important;
+    }
+    
+    section[data-testid="stSidebar"] .stSelectbox label,
+    section[data-testid="stSidebar"] .stTextInput label,
+    section[data-testid="stSidebar"] .stNumberInput label {
+        color: #cbd5e1 !important;
+        font-weight: 500 !important;
+    }
+    
+    /* サイドバーのエキスパンダー内のテキスト */
+    section[data-testid="stSidebar"] details summary span {
+        color: #f1f5f9 !important;
     }
     
     /* アラートボックス */
@@ -356,11 +410,22 @@ st.markdown("""
     /* ラベル */
     .stTextInput > label,
     .stNumberInput > label,
-    .stSelectbox > label {
+    .stSelectbox > label,
+    label {
         font-family: 'Noto Sans JP', sans-serif !important;
         font-size: 0.85rem !important;
         font-weight: 500 !important;
-        color: var(--neutral-700) !important;
+        color: #cbd5e1 !important;
+    }
+    
+    /* マークダウンテキスト */
+    .stMarkdown, .stMarkdown p {
+        color: #e2e8f0 !important;
+    }
+    
+    /* small タグ */
+    small {
+        color: #94a3b8 !important;
     }
     
     /* スクロールバー */
@@ -965,9 +1030,9 @@ if st.session_state.get('shift_success', False):
     def get_shift_style(val_str):
         val = val_str.strip() if val_str else ""
         if val == '◎' or val_str == '◎ ':
-            if val_str == '◎ ':  # 希望休
-                return 'background: linear-gradient(135deg, #059669, #10b981); color: white; font-weight: 700;'
-            return 'background: #10b981; color: white;'
+            if val_str == '◎ ':  # 希望休 - ゴールドで目立たせる
+                return 'background: linear-gradient(135deg, #d97706, #fbbf24); color: #1a1a1a; font-weight: 700; box-shadow: 0 0 8px rgba(251, 191, 36, 0.5);'
+            return 'background: #10b981; color: white;'  # 通常公休
         elif val == '有':
             return 'background: linear-gradient(135deg, #ec4899, #f472b6); color: white; font-weight: 600;'
         elif val == 'リ休':
@@ -1170,6 +1235,7 @@ if st.session_state.get('shift_success', False):
         <div class="legend-item"><div class="legend-badge" style="background: #f8fafc; color: #1e293b;">日</div>日勤</div>
         <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #ea580c, #f97316); color: white;">遅</div>遅番</div>
         <div class="legend-item"><div class="legend-badge" style="background: #10b981; color: white;">◎</div>公休</div>
+        <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #d97706, #fbbf24); color: #1a1a1a;">★</div>希望休</div>
         <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #ec4899, #f472b6); color: white;">有</div>有休</div>
         <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #f97316, #fb923c); color: white;">リ</div>リフレッシュ休暇</div>
     </div>
