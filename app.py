@@ -930,14 +930,35 @@ if st.session_state.get('shift_success', False):
                 alerts.append(("info", f"{name}: 夜勤 {n_cnt}回 (目標{s_info['night_target']})"))
 
     if alerts:
-        with st.expander("📋 確認ポイント", expanded=True):
-            for alert_type, msg in alerts:
-                if alert_type == "error":
-                    st.markdown(f"🔴 {msg}")
-                elif alert_type == "warning":
-                    st.markdown(f"⚠️ {msg}")
-                else:
-                    st.markdown(f"ℹ️ {msg}")
+        # カスタムアラートボックス
+        alert_html = ['<div style="background: #1e293b; border-radius: 16px; padding: 1.25rem; margin-bottom: 1.5rem; border: 1px solid #475569; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">']
+        alert_html.append('<div style="font-weight: 600; font-size: 1rem; color: #f1f5f9; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">📋 確認ポイント</div>')
+        
+        for alert_type, msg in alerts:
+            if alert_type == "error":
+                icon = "🔴"
+                bg = "rgba(239, 68, 68, 0.15)"
+                border = "#ef4444"
+                color = "#fca5a5"
+            elif alert_type == "warning":
+                icon = "⚠️"
+                bg = "rgba(245, 158, 11, 0.15)"
+                border = "#f59e0b"
+                color = "#fcd34d"
+            else:
+                icon = "ℹ️"
+                bg = "rgba(59, 130, 246, 0.15)"
+                border = "#3b82f6"
+                color = "#93c5fd"
+            
+            alert_html.append(f'''
+            <div style="background: {bg}; border-left: 3px solid {border}; padding: 0.6rem 1rem; margin-bottom: 0.5rem; border-radius: 0 8px 8px 0;">
+                <span style="color: {color}; font-size: 0.9rem;">{icon} {msg}</span>
+            </div>
+            ''')
+        
+        alert_html.append('</div>')
+        st.markdown(''.join(alert_html), unsafe_allow_html=True)
 
     # ------------------------------------------
     # テーブル表示（HTMLテーブルで高品質レンダリング）
@@ -1161,10 +1182,27 @@ if st.session_state.get('shift_success', False):
     st.markdown(''.join(html_parts), unsafe_allow_html=True)
     
     # ダウンロードボタン
+    st.markdown('<div style="margin-top: 1.5rem;"></div>', unsafe_allow_html=True)
+    
+    # CSV用のデータフレーム作成
+    df_csv = df_raw.copy()
+    df_csv = df_csv.replace("◎ ", "◎")
+    
+    # 列名を日付形式に変更
+    csv_cols = []
+    for d in range(1, current_days + 1):
+        wd = weekdays_ja[datetime.date(current_year, current_month, d).weekday()]
+        csv_cols.append(f"{d}({wd})")
+    df_csv.columns = csv_cols
+    
+    # 夜勤・公休列を追加
+    df_csv['夜勤'] = [list(map(str.strip, r)).count('夜') for r in df_raw.values]
+    df_csv['公休'] = [list(map(str.strip, r)).count('◎') for r in df_raw.values]
+    
+    csv = df_csv.to_csv(sep=",").encode('utf-8_sig')
+    
     col1, col2, col3 = st.columns([1, 1, 2])
     with col1:
-        df_csv = df_display.replace("◎ ", "◎")
-        csv = df_csv.to_csv(sep=",").encode('utf-8_sig')
         st.download_button(
             "📥 CSVダウンロード", 
             csv, 
