@@ -10,7 +10,7 @@ import re
 # ==========================================
 # 1. アプリの設定 & デザイン
 # ==========================================
-st.set_page_config(page_title="Shift Manager Pro v41", layout="wide", page_icon="🗓️")
+st.set_page_config(page_title="Shift Manager Pro v42", layout="wide", page_icon="🗓️")
 
 st.markdown("""
     <style>
@@ -30,8 +30,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🗓️ Shift Manager Pro v41")
-st.caption("クラウド対応：希望休・有休・リ休の色分け対応版")
+st.title("🗓️ Shift Manager Pro v42")
+st.caption("クラウド対応：希望休の視認性向上版（深緑・白文字）")
 
 # ==========================================
 # 2. スタッフ管理機能
@@ -240,15 +240,12 @@ def solve_shift(staff_data):
         
         interval_factor = 0.6
         
-        # チェック用関数
-        # ※「◎ 」(スペース付き)も休みとして認識させる必要がある
         def check_rules(name, day_idx, current_sched, shift_type):
             staff_info = next(s for s in staff_data if s["name"] == name)
             
             if day_idx == 0: prev = staff_info["prev_shift"]
             else: prev = current_sched[name][day_idx - 1]
             
-            # strip()でスペースを除去して判定
             prev_clean = prev.strip()
             
             if prev_clean == "・" and shift_type.strip() not in ["◎", "リ休", "有"]: return False
@@ -285,10 +282,10 @@ def solve_shift(staff_data):
                     if s["fixed_shifts"][i] == "夜":
                         night_counts[name] += 1
                         if i + 1 < DAYS: schedule[name][i+1] = "・"
-                        if i + 2 < DAYS: schedule[name][i+2] = "◎" # 自動埋めは通常◎
+                        if i + 2 < DAYS: schedule[name][i+2] = "◎" 
 
             # (2) 休み希望 (特殊タグ付与)
-            # 希望休は "◎ " (後ろにスペース) として保存し、色を区別する
+            # 希望休は "◎ " (後ろにスペース) として保存
             for d in s["req_off"]: 
                 if schedule[name][d-1] == "": schedule[name][d-1] = "◎ " 
             
@@ -306,7 +303,7 @@ def solve_shift(staff_data):
                         schedule[name][d] = "夜"
                         night_counts[name] += 1
                         if d < DAYS - 1: schedule[name][d+1] = "・"
-                        if d + 2 < DAYS and schedule[name][d+2] == "": schedule[name][d+2] = "◎" # 夜勤明けセットは通常◎
+                        if d + 2 < DAYS and schedule[name][d+2] == "": schedule[name][d+2] = "◎"
             
             for shifts, req_list in [("早", "req_early"), ("遅", "req_late"), ("日", "req_day")]:
                 if req_list in s:
@@ -338,7 +335,6 @@ def solve_shift(staff_data):
                 name = s["name"]
                 if schedule[name][d] == "":
                     if d < DAYS - 1 and schedule[name][d+1] != "": continue
-                    # 翌々日のチェック (空白 or 休みならOK)
                     if d + 2 < DAYS:
                         val_next2 = schedule[name][d+2].strip()
                         if val_next2 != "" and val_next2 not in ["◎", "有", "リ休"]: continue
@@ -401,7 +397,6 @@ def solve_shift(staff_data):
         
         for s in staff_data:
             if s["type"] == 0:
-                # "◎" と "◎ " 両方をカウント
                 cnt = sum([1 for x in schedule[s["name"]] if x.strip() == "◎"])
                 score -= abs(cnt - TARGET_OFF_DAYS) * 100
         
@@ -523,13 +518,14 @@ if st.session_state.get('shift_success', False):
         
         # 背景色ロジック
         if val_str == '◎ ':  # 希望休(スペースあり)
-            bg_color = '#bbf7d0'; # 濃いめの緑
+            # ★ここを変更しました：深緑背景に白文字
+            bg_color = '#15803d'; color = 'white'; 
         elif val_str == '◎': # 自動公休
-            bg_color = '#dcfce7'; # 薄い緑
+            bg_color = '#dcfce7'; # 薄い緑のまま
         elif val_str == '有':
-            bg_color = '#fbcfe8'; # ピンク
+            bg_color = '#fbcfe8'; 
         elif val_str == 'リ休':
-            bg_color = '#ffedd5'; # オレンジ
+            bg_color = '#ffedd5'; 
             
         elif val_str == '夜': bg_color = '#1E3A8A'; color = 'white'
         elif val_str == '・': bg_color = '#BFDBFE'
@@ -546,7 +542,6 @@ if st.session_state.get('shift_success', False):
 
     st.dataframe(df_display.style.map(color_shift), use_container_width=True)
     
-    # CSVダウンロード時はスペースを除去してきれいなデータにする
     df_csv = df_display.replace("◎ ", "◎")
     csv = df_csv.to_csv(sep=",").encode('utf-8_sig')
     st.download_button("📥 CSVをダウンロード", csv, f'shift_{current_year}_{current_month}.csv', 'text/csv')
