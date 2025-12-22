@@ -145,11 +145,12 @@ st.markdown("""
         padding: 0.75rem 1.5rem;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         box-shadow: var(--shadow-md);
+        color: #f1f5f9 !important;
     }
     
     .stButton > button[kind="primary"] {
         background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
-        color: white;
+        color: white !important;
     }
     
     .stButton > button[kind="primary"]:hover {
@@ -159,15 +160,15 @@ st.markdown("""
     }
     
     .stButton > button:not([kind="primary"]) {
-        background: white;
-        color: var(--neutral-700);
-        border: 1px solid var(--neutral-200);
+        background: #334155;
+        color: #f1f5f9 !important;
+        border: 1px solid #475569;
     }
     
     .stButton > button:not([kind="primary"]):hover {
-        background: var(--neutral-50);
-        border-color: var(--primary-light);
-        color: var(--primary);
+        background: #475569;
+        border-color: #6366f1;
+        color: #ffffff !important;
     }
     
     /* 入力フィールド */
@@ -397,14 +398,39 @@ st.markdown("""
     /* ファイルアップローダー */
     .stFileUploader > div {
         border-radius: 12px !important;
-        border: 2px dashed var(--neutral-300) !important;
+        border: 2px dashed #475569 !important;
         padding: 1rem !important;
         transition: all 0.2s ease !important;
+        background: #1e293b !important;
     }
     
     .stFileUploader > div:hover {
-        border-color: var(--primary) !important;
-        background: var(--neutral-50) !important;
+        border-color: #6366f1 !important;
+        background: #334155 !important;
+    }
+    
+    .stFileUploader label {
+        color: #cbd5e1 !important;
+    }
+    
+    .stFileUploader small,
+    .stFileUploader span {
+        color: #94a3b8 !important;
+    }
+    
+    /* ファイルアップローダー内のテキスト */
+    [data-testid="stFileUploader"] section {
+        color: #e2e8f0 !important;
+    }
+    
+    [data-testid="stFileUploader"] section small {
+        color: #94a3b8 !important;
+    }
+    
+    [data-testid="stFileUploader"] button {
+        color: #f1f5f9 !important;
+        background: #475569 !important;
+        border: none !important;
     }
     
     /* ラベル */
@@ -480,7 +506,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. スタッフ管理機能
+# 2. セッション状態の初期化
 # ==========================================
 if "staff_list" not in st.session_state:
     st.session_state.staff_list = [
@@ -488,7 +514,49 @@ if "staff_list" not in st.session_state:
         {"name": "スタッフB", "type": 0}
     ]
 
+if "input_year" not in st.session_state: st.session_state.input_year = 2026
+if "input_month" not in st.session_state: st.session_state.input_month = 2
+if "target_off" not in st.session_state: st.session_state.target_off = 9
+
+# ==========================================
+# 3. 設定の読込コールバック
+# ==========================================
+def load_settings_callback():
+    uploaded = st.session_state.setting_file_uploader
+    if uploaded is not None:
+        try:
+            data = json.load(uploaded)
+            if "staff_list_save" in data:
+                st.session_state.staff_list = data["staff_list_save"]
+            for key, value in data.items():
+                if key != "staff_list_save":
+                    st.session_state[key] = value
+            st.session_state.load_success_flag = True
+        except Exception as e:
+            st.session_state.load_error = f"エラー: {e}"
+
+# ==========================================
+# 4. サイドバー構成
+# ==========================================
 with st.sidebar:
+    # --- シフト作成ボタン（一番上） ---
+    if st.button("🚀 シフトを作成", type="primary", use_container_width=True):
+        st.session_state.run_solver = True
+    else:
+        st.session_state.run_solver = False
+    
+    st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+    
+    # --- 設定ファイル ---
+    st.markdown('<div class="sidebar-header">📂 設定ファイル</div>', unsafe_allow_html=True)
+    st.file_uploader("ファイルをドラッグ＆ドロップ", type=["json"], key="setting_file_uploader", on_change=load_settings_callback)
+    if st.session_state.get("load_success_flag", False):
+        st.success("✓ 復元完了")
+        st.session_state.load_success_flag = False
+    
+    st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+    
+    # --- スタッフ管理 ---
     st.markdown('<div class="sidebar-header">👥 スタッフ管理</div>', unsafe_allow_html=True)
     
     with st.form("add_staff_form", clear_on_submit=True):
@@ -506,46 +574,15 @@ with st.sidebar:
             st.rerun()
 
     if st.session_state.staff_list:
-        st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
         del_name = st.selectbox("削除対象", [s["name"] for s in st.session_state.staff_list], key="del_select")
-        if st.button("🗑️ 削除する"):
+        if st.button("🗑️ このスタッフを削除", use_container_width=True):
             st.session_state.staff_list = [s for s in st.session_state.staff_list if s["name"] != del_name]
             st.rerun()
     
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
-
-# ==========================================
-# 3. 設定の読込・保存
-# ==========================================
-def load_settings_callback():
-    uploaded = st.session_state.setting_file_uploader
-    if uploaded is not None:
-        try:
-            data = json.load(uploaded)
-            if "staff_list_save" in data:
-                st.session_state.staff_list = data["staff_list_save"]
-            for key, value in data.items():
-                if key != "staff_list_save":
-                    st.session_state[key] = value
-            st.session_state.load_success_flag = True
-        except Exception as e:
-            st.session_state.load_error = f"エラー: {e}"
-
-with st.sidebar:
-    st.markdown('<div class="sidebar-header">📂 設定ファイル</div>', unsafe_allow_html=True)
-    st.file_uploader("設定を復元", type=["json"], key="setting_file_uploader", on_change=load_settings_callback, label_visibility="collapsed")
-    if st.session_state.get("load_success_flag", False):
-        st.success("✓ 復元完了")
-        st.session_state.load_success_flag = False
-    st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
-
-# ==========================================
-# 4. 年月・全体設定
-# ==========================================
-with st.sidebar:
+    
+    # --- シフト設定 ---
     st.markdown('<div class="sidebar-header">📅 シフト設定</div>', unsafe_allow_html=True)
-    if "input_year" not in st.session_state: st.session_state.input_year = 2026
-    if "input_month" not in st.session_state: st.session_state.input_month = 2
 
     col_y, col_m = st.columns(2)
     with col_y: YEAR = st.number_input("年", 2025, 2030, key="input_year")
@@ -553,15 +590,9 @@ with st.sidebar:
 
     _, DAYS = calendar.monthrange(YEAR, MONTH)
     
-    if "target_off" not in st.session_state: st.session_state.target_off = 9
     TARGET_OFF_DAYS = st.number_input("常勤の公休数", 1, 15, key="target_off", help="目標となる公休日数を設定")
     
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
-    
-    if st.button("🚀 シフトを作成", type="primary", use_container_width=True):
-        st.session_state.run_solver = True
-    else:
-        st.session_state.run_solver = False
 
 # ==========================================
 # 5. 各スタッフ詳細設定
@@ -1030,8 +1061,8 @@ if st.session_state.get('shift_success', False):
     def get_shift_style(val_str):
         val = val_str.strip() if val_str else ""
         if val == '◎' or val_str == '◎ ':
-            if val_str == '◎ ':  # 希望休 - ゴールドで目立たせる
-                return 'background: linear-gradient(135deg, #d97706, #fbbf24); color: #1a1a1a; font-weight: 700; box-shadow: 0 0 8px rgba(251, 191, 36, 0.5);'
+            if val_str == '◎ ':  # 希望休 - シアン/ターコイズで目立たせる
+                return 'background: linear-gradient(135deg, #0891b2, #22d3ee); color: #0c1a1a; font-weight: 700; box-shadow: 0 0 8px rgba(34, 211, 238, 0.5);'
             return 'background: #10b981; color: white;'  # 通常公休
         elif val == '有':
             return 'background: linear-gradient(135deg, #ec4899, #f472b6); color: white; font-weight: 600;'
@@ -1229,13 +1260,13 @@ if st.session_state.get('shift_success', False):
     # 凡例
     html_parts.append('''
     <div class="legend-container">
-        <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #3730a3, #6366f1); color: white;">夜</div>夜勤</div>
-        <div class="legend-item"><div class="legend-badge" style="background: #818cf8; color: white;">・</div>明け</div>
         <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #eab308, #facc15); color: #1a1a1a;">早</div>早番</div>
         <div class="legend-item"><div class="legend-badge" style="background: #f8fafc; color: #1e293b;">日</div>日勤</div>
         <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #ea580c, #f97316); color: white;">遅</div>遅番</div>
+        <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #3730a3, #6366f1); color: white;">夜</div>夜勤</div>
+        <div class="legend-item"><div class="legend-badge" style="background: #818cf8; color: white;">・</div>明け</div>
         <div class="legend-item"><div class="legend-badge" style="background: #10b981; color: white;">◎</div>公休</div>
-        <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #d97706, #fbbf24); color: #1a1a1a;">★</div>希望休</div>
+        <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #0891b2, #22d3ee); color: #0c1a1a;">★</div>希望休</div>
         <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #ec4899, #f472b6); color: white;">有</div>有休</div>
         <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #f97316, #fb923c); color: white;">リ</div>リフレッシュ休暇</div>
     </div>
