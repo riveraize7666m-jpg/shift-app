@@ -5,6 +5,7 @@ import calendar
 import datetime
 import json
 import copy
+import re
 
 # ==========================================
 # 1. アプリの設定 & デザイン
@@ -30,7 +31,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("🗓️ Shift Manager Pro v41")
-st.caption("クラウド対応：休日色分け対応版")
+st.caption("クラウド対応：希望休・有休・リ休の色分け対応版")
 
 # ==========================================
 # 2. スタッフ管理機能
@@ -133,7 +134,6 @@ for idx, staff in enumerate(st.session_state.staff_list):
     stype = staff["type"]
     
     with st.sidebar.expander(f"{name}", expanded=False):
-        # 属性変更
         type_labels = ["常勤", "パート(日勤のみ)", "パート(早番のみ)"]
         current_idx = 0
         if stype == 1: current_idx = 1
@@ -156,7 +156,6 @@ for idx, staff in enumerate(st.session_state.staff_list):
             if key_streak not in st.session_state: st.session_state[key_streak] = 0
             prev_streak = st.number_input("連勤", 0, 10, key=key_streak)
         
-        # 固定シフト(年始)
         f1, f2, f3 = "", "", ""
         if st.checkbox("年始固定(1/1-3)", key=f"open_fix_{name}"):
             fix_opts = [""] + SHIFT_OPTIONS
@@ -217,7 +216,7 @@ for s in st.session_state.staff_list:
 st.sidebar.download_button("💾 設定を保存", json.dumps(export_data, indent=2, ensure_ascii=False), 'shift_settings.json', 'application/json')
 
 # ==========================================
-# 6. 計算ロジック (v40 汎用・厳格化版)
+# 6. 計算ロジック
 # ==========================================
 def solve_shift(staff_data):
     progress_text = "AIがシフトを作成中..."
@@ -240,33 +239,31 @@ def solve_shift(staff_data):
         night_counts = {s["name"]: 0 for s in staff_data}
         
         interval_factor = 0.6
-        night_intervals = {}
-        for s in staff_data:
-            if s["night_target"] > 0:
-                calc = (DAYS / s["night_target"]) * interval_factor
-                night_intervals[s["name"]] = int(calc)
-            else:
-                night_intervals[s["name"]] = 0
-
+        
+        # チェック用関数
+        # ※「◎ 」(スペース付き)も休みとして認識させる必要がある
         def check_rules(name, day_idx, current_sched, shift_type):
             staff_info = next(s for s in staff_data if s["name"] == name)
             
             if day_idx == 0: prev = staff_info["prev_shift"]
             else: prev = current_sched[name][day_idx - 1]
             
-            if prev == "・" and shift_type not in ["◎", "リ休", "有"]: return False
+            # strip()でスペースを除去して判定
+            prev_clean = prev.strip()
             
-            if prev == "遅" and shift_type in ["早", "日"]: return False
-            if prev == "日" and shift_type == "早": return False
+            if prev_clean == "・" and shift_type.strip() not in ["◎", "リ休", "有"]: return False
+            if prev_clean == "遅" and shift_type in ["早", "日"]: return False
+            if prev_clean == "日" and shift_type == "早": return False
             
-            is_off_type = (shift_type in ["◎", "リ休", "有", "・"])
+            is_off_type = (shift_type.strip() in ["◎", "リ休", "有", "・"])
             if is_off_type: return True
             
             streak = 0
             current_add = 1
             temp_d = day_idx - 1
             while temp_d >= 0:
-                if current_sched[name][temp_d] not in ["", "◎", "リ休", "有"]: 
+                val = current_sched[name][temp_d].strip()
+                if val not in ["", "◎", "リ休", "有"]: 
                     streak += 1; temp_d -= 1
                 else: break
             if temp_d < 0: streak += staff_info["prev_streak"]
@@ -288,13 +285,16 @@ def solve_shift(staff_data):
                     if s["fixed_shifts"][i] == "夜":
                         night_counts[name] += 1
                         if i + 1 < DAYS: schedule[name][i+1] = "・"
-                        if i + 2 < DAYS: schedule[name][i+2] = "◎"
+                        if i + 2 < DAYS: schedule[name][i+2] = "◎" # 自動埋めは通常◎
 
-            # (2) 休み希望
+            # (2) 休み希望 (特殊タグ付与)
+            # 希望休は "◎ " (後ろにスペース) として保存し、色を区別する
             for d in s["req_off"]: 
-                if schedule[name][d-1] == "": schedule[name][d-1] = "◎"
+                if schedule[name][d-1] == "": schedule[name][d-1] = "◎ " 
+            
             for d in s["refresh_days"]:
                 if schedule[name][d-1] == "": schedule[name][d-1] = "リ休"
+            
             for d in s["paid_leave_days"]:
                 if schedule[name][d-1] == "": schedule[name][d-1] = "有"
             
@@ -306,7 +306,7 @@ def solve_shift(staff_data):
                         schedule[name][d] = "夜"
                         night_counts[name] += 1
                         if d < DAYS - 1: schedule[name][d+1] = "・"
-                        if d + 2 < DAYS: schedule[name][d+2] = "◎"
+                        if d + 2 < DAYS and schedule[name][d+2] == "": schedule[name][d+2] = "◎" # 夜勤明けセットは通常◎
             
             for shifts, req_list in [("早", "req_early"), ("遅", "req_late"), ("日", "req_day")]:
                 if req_list in s:
@@ -316,15 +316,15 @@ def solve_shift(staff_data):
                             schedule[name][d] = shifts
             
             # (4) パート自動埋め
-            if s["type"] == 1: # パート(日勤のみ)
+            if s["type"] == 1: 
                 for d in range(DAYS):
                     if schedule[name][d] == "": schedule[name][d] = "日"
-            elif s["type"] == 2: # パート(早番のみ)
+            elif s["type"] == 2:
                 for d in range(DAYS):
                     if schedule[name][d] == "": schedule[name][d] = "早"
 
         # ---------------------------------------------------
-        # Phase 2: 夜勤
+        # Phase 2: 夜勤割り当て
         # ---------------------------------------------------
         cands_night = [s for s in staff_data if s["type"] == 0 and s["night_target"] > 0]
         days_indices = list(range(DAYS))
@@ -338,7 +338,10 @@ def solve_shift(staff_data):
                 name = s["name"]
                 if schedule[name][d] == "":
                     if d < DAYS - 1 and schedule[name][d+1] != "": continue
-                    if d + 2 < DAYS and schedule[name][d+2] not in ["", "◎", "有", "リ休"]: continue
+                    # 翌々日のチェック (空白 or 休みならOK)
+                    if d + 2 < DAYS:
+                        val_next2 = schedule[name][d+2].strip()
+                        if val_next2 != "" and val_next2 not in ["◎", "有", "リ休"]: continue
 
                     if check_rules(name, d, schedule, "夜"):
                         schedule[name][d] = "夜"
@@ -348,42 +351,44 @@ def solve_shift(staff_data):
                         break
 
         # ---------------------------------------------------
-        # Phase 3: 日勤帯
+        # Phase 3: 日勤埋め合わせ
         # ---------------------------------------------------
         regulars = [s for s in staff_data if s["type"] == 0]
         
         for d in range(DAYS):
+            # 遅番確保
             if not any(schedule[s["name"]][d] == "遅" for s in staff_data):
                 random.shuffle(regulars)
                 for s in regulars:
                     if schedule[s["name"]][d] == "":
-                        curr_work = sum([1 for x in schedule[s["name"]] if x in ["早","日","遅","夜","・"]])
+                        curr_work = sum([1 for x in schedule[s["name"]] if x.strip() in ["早","日","遅","夜","・"]])
                         if curr_work < work_limits[s["name"]]:
                             if check_rules(s["name"], d, schedule, "遅"):
                                 schedule[s["name"]][d] = "遅"
                                 break
             
+            # 早番確保
             if not any(schedule[s["name"]][d] == "早" for s in staff_data):
                 random.shuffle(regulars)
                 for s in regulars:
                     if schedule[s["name"]][d] == "":
-                        curr_work = sum([1 for x in schedule[s["name"]] if x in ["早","日","遅","夜","・"]])
+                        curr_work = sum([1 for x in schedule[s["name"]] if x.strip() in ["早","日","遅","夜","・"]])
                         if curr_work < work_limits[s["name"]]:
                             if check_rules(s["name"], d, schedule, "早"):
                                 schedule[s["name"]][d] = "早"
                                 break
 
+            # 残り日勤
             random.shuffle(regulars)
             for s in regulars:
                 if schedule[s["name"]][d] == "":
-                    curr_work = sum([1 for x in schedule[s["name"]] if x in ["早","日","遅","夜","・"]])
+                    curr_work = sum([1 for x in schedule[s["name"]] if x.strip() in ["早","日","遅","夜","・"]])
                     if curr_work < work_limits[s["name"]]:
-                        fill = "日"
-                        if check_rules(s["name"], d, schedule, fill):
-                            schedule[s["name"]][d] = fill
+                        if check_rules(s["name"], d, schedule, "日"):
+                            schedule[s["name"]][d] = "日"
 
         # ---------------------------------------------------
-        # Phase 4: 最終調整
+        # Phase 4: 最終調整 (残りを通常の◎で埋める)
         # ---------------------------------------------------
         for s in staff_data:
             for d in range(DAYS):
@@ -396,7 +401,8 @@ def solve_shift(staff_data):
         
         for s in staff_data:
             if s["type"] == 0:
-                cnt = schedule[s["name"]].count("◎")
+                # "◎" と "◎ " 両方をカウント
+                cnt = sum([1 for x in schedule[s["name"]] if x.strip() == "◎"])
                 score -= abs(cnt - TARGET_OFF_DAYS) * 100
         
         for s in staff_data:
@@ -407,7 +413,7 @@ def solve_shift(staff_data):
         
         shortage_penalty = 0
         for d in range(DAYS):
-             day_cnt = sum([1 for s in staff_data if schedule[s["name"]][d] in ["早", "日", "遅"]])
+             day_cnt = sum([1 for s in staff_data if schedule[s["name"]][d].strip() in ["早", "日", "遅"]])
              if day_cnt < 3: shortage_penalty += 1
         score -= shortage_penalty * 200
 
@@ -450,12 +456,15 @@ if st.session_state.get('shift_success', False):
     
     st.success(f"🎉 シフト案を作成しました（{current_year}年{current_month}月）")
     
+    # ------------------------------------------
+    # アラート
+    # ------------------------------------------
     df_raw = pd.DataFrame(result).T
     alerts = []
     
     day_shift_counts = {}
     for d_idx, col in enumerate(df_raw.columns):
-        col_values = df_raw[col].values
+        col_values = [x.strip() for x in df_raw[col].values]
         day_cnt = sum([1 for x in col_values if x in ['早', '日', '遅']])
         day_shift_counts[col] = day_cnt
         
@@ -471,26 +480,29 @@ if st.session_state.get('shift_success', False):
 
     for name in df_raw.index:
         s_info = next(s for s in staff_data_list if s["name"] == name)
-        row = df_raw.loc[name]
+        row = [x.strip() for x in df_raw.loc[name]]
         
         if s_info["type"] == 0:
-            off_cnt = list(row).count("◎")
+            off_cnt = row.count("◎")
             if off_cnt != TARGET_OFF_DAYS:
                 alerts.append(f"⚠️ {name}: 公休が {off_cnt}日 (目標{TARGET_OFF_DAYS})")
         
         if s_info["night_target"] > 0:
-            n_cnt = list(row).count("夜")
+            n_cnt = row.count("夜")
             if n_cnt != s_info["night_target"]:
                 alerts.append(f"ℹ️ {name}: 夜勤 {n_cnt}回 (目標{s_info['night_target']})")
 
     if alerts:
-        with st.expander("🚨 シフトの要確認ポイント (クリックで開閉)", expanded=True):
-            for a in alerts:
-                st.write(a)
+        with st.expander("🚨 シフトの要確認ポイント", expanded=True):
+            for a in alerts: st.write(a)
 
+    # ------------------------------------------
+    # テーブル表示
+    # ------------------------------------------
     df_display = df_raw.copy()
-    df_display['夜勤'] = [list(r).count('夜') for r in df_raw.values]
-    df_display['公休'] = [list(r).count('◎') for r in df_raw.values]
+    # 集計用にはstripして判定
+    df_display['夜勤'] = [list(map(str.strip, r)).count('夜') for r in df_raw.values]
+    df_display['公休'] = [list(map(str.strip, r)).count('◎') for r in df_raw.values]
     
     total_row = pd.Series(day_shift_counts, name="日勤計")
     total_row['夜勤'] = ''
@@ -505,27 +517,36 @@ if st.session_state.get('shift_success', False):
         cols.append(f"{d}({wd})")
     df_display.columns = cols + ['夜勤', '公休']
     
-    # ★ ここで色分けを変更 ★
     def color_shift(val):
+        val_str = str(val)
         color = 'black'; bg_color = ''
-        if val == '夜': bg_color = '#1E3A8A'; color = 'white'
-        elif val == '・': bg_color = '#BFDBFE'
-        elif val == '早': bg_color = '#FDE047'
-        elif val == '遅': bg_color = '#FDBA74'
-        elif val == '日': bg_color = '#FFFFFF'
         
-        # 変更箇所: 休みごとの色定義
-        elif val == '◎': bg_color = '#DCFCE7'   # 薄い緑
-        elif val == '有': bg_color = '#FECACA'   # 薄いピンク
-        elif val == 'リ休': bg_color = '#E9D5FF' # 薄い紫
-
+        # 背景色ロジック
+        if val_str == '◎ ':  # 希望休(スペースあり)
+            bg_color = '#bbf7d0'; # 濃いめの緑
+        elif val_str == '◎': # 自動公休
+            bg_color = '#dcfce7'; # 薄い緑
+        elif val_str == '有':
+            bg_color = '#fbcfe8'; # ピンク
+        elif val_str == 'リ休':
+            bg_color = '#ffedd5'; # オレンジ
+            
+        elif val_str == '夜': bg_color = '#1E3A8A'; color = 'white'
+        elif val_str == '・': bg_color = '#BFDBFE'
+        elif val_str == '早': bg_color = '#FDE047'
+        elif val_str == '遅': bg_color = '#FDBA74'
+        elif val_str == '日': bg_color = '#FFFFFF'
+        
         elif isinstance(val, (int, float)):
             if val < 3: bg_color = '#FECACA'; font_weight='bold'
             else: bg_color = '#F0F0F0'; font_weight='normal'
             return f'background-color: {bg_color}; color: black; font-weight: {font_weight}; border: 1px solid #ddd;'
+        
         return f'background-color: {bg_color}; color: {color}; border: 1px solid #ddd;'
 
     st.dataframe(df_display.style.map(color_shift), use_container_width=True)
     
-    csv = df_display.to_csv(sep=",").encode('utf-8_sig')
+    # CSVダウンロード時はスペースを除去してきれいなデータにする
+    df_csv = df_display.replace("◎ ", "◎")
+    csv = df_csv.to_csv(sep=",").encode('utf-8_sig')
     st.download_button("📥 CSVをダウンロード", csv, f'shift_{current_year}_{current_month}.csv', 'text/csv')
