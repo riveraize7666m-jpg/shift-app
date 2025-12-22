@@ -14,7 +14,7 @@ from yaml.loader import SafeLoader
 # ==========================================
 # ユーザー: admin
 # パスワード: abc123
-# ハッシュ値: $2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW (計算済み)
+# ハッシュ値: $2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW
 
 config = {
     'credentials': {
@@ -31,13 +31,12 @@ config = {
         'key': 'some_signature_key',
         'name': 'some_cookie_name'
     }
-    # preauthorized は削除 (DeprecationError回避のため)
 }
 
 # ==========================================
 # 1. アプリの設定 & デザイン
 # ==========================================
-st.set_page_config(page_title="Shift Manager Pro v48", layout="wide", page_icon="🗓️")
+st.set_page_config(page_title="Shift Manager Pro v49", layout="wide", page_icon="🗓️")
 
 st.markdown("""
     <style>
@@ -57,7 +56,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 認証オブジェクトの作成 (v48修正: preauthorized引数を削除)
+# 認証オブジェクトの作成
 authenticator = stauth.Authenticate(
     config['credentials'],
     config['cookie']['name'],
@@ -66,10 +65,15 @@ authenticator = stauth.Authenticate(
 )
 
 # ==========================================
-# ログイン画面の表示
+# ログイン画面の表示 (v49修正: セッションステート直接参照)
 # ==========================================
-# ログインウィジェットを表示
-name, authentication_status, username = authenticator.login('main')
+# まずログインウィジェットを表示させる（戻り値は受け取らない）
+authenticator.login('main')
+
+# セッションステートから認証状態を取得する
+authentication_status = st.session_state.get('authentication_status')
+name = st.session_state.get('name')
+username = st.session_state.get('username')
 
 if authentication_status is False:
     st.error('ユーザー名またはパスワードが間違っています')
@@ -99,8 +103,8 @@ if authentication_status:
         authenticator.logout('ログアウト', 'sidebar')
         st.markdown("---")
 
-    st.title("🗓️ Shift Manager Pro v48")
-    st.caption("クラウド対応：ログイン機能修正版")
+    st.title("🗓️ Shift Manager Pro v49")
+    st.caption("クラウド対応：ログイン機能安定版")
 
     # ==========================================
     # 2. スタッフ管理機能
