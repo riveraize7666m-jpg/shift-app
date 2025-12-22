@@ -10,7 +10,7 @@ import re
 # ==========================================
 # 1. アプリの設定 & デザイン
 # ==========================================
-st.set_page_config(page_title="Shift Manager Pro v42", layout="wide", page_icon="🗓️")
+st.set_page_config(page_title="Shift Manager Pro v43", layout="wide", page_icon="🗓️")
 
 st.markdown("""
     <style>
@@ -30,8 +30,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🗓️ Shift Manager Pro v42")
-st.caption("クラウド対応：希望休の視認性向上版（深緑・白文字）")
+st.title("🗓️ Shift Manager Pro v43")
+st.caption("クラウド対応：希望休前の夜勤優先配置ロジック搭載版")
 
 # ==========================================
 # 2. スタッフ管理機能
@@ -284,14 +284,11 @@ def solve_shift(staff_data):
                         if i + 1 < DAYS: schedule[name][i+1] = "・"
                         if i + 2 < DAYS: schedule[name][i+2] = "◎" 
 
-            # (2) 休み希望 (特殊タグ付与)
-            # 希望休は "◎ " (後ろにスペース) として保存
+            # (2) 休み希望
             for d in s["req_off"]: 
                 if schedule[name][d-1] == "": schedule[name][d-1] = "◎ " 
-            
             for d in s["refresh_days"]:
                 if schedule[name][d-1] == "": schedule[name][d-1] = "リ休"
-            
             for d in s["paid_leave_days"]:
                 if schedule[name][d-1] == "": schedule[name][d-1] = "有"
             
@@ -321,7 +318,44 @@ def solve_shift(staff_data):
                     if schedule[name][d] == "": schedule[name][d] = "早"
 
         # ---------------------------------------------------
-        # Phase 2: 夜勤割り当て
+        # Phase 1.5: 希望休前の夜勤優先配置 (★追加)
+        # ---------------------------------------------------
+        for d in range(DAYS - 2):
+            # 既に夜勤がいるか確認
+            if any(schedule[s["name"]][d] == "夜" for s in staff_data):
+                continue
+            
+            # 2日後(d+2)に希望休がある常勤スタッフを探す
+            candidates = []
+            for s in staff_data:
+                if s["type"] != 0: continue
+                name = s["name"]
+                
+                # 2日後のシフトを見る
+                val_next2 = schedule[name][d+2].strip()
+                
+                # 希望休系なら候補
+                if val_next2 in ["◎", "有", "リ休"]:
+                    # d, d+1が空いていてルールOKなら
+                    if schedule[name][d] == "" and schedule[name][d+1] == "":
+                         if check_rules(name, d, schedule, "夜"):
+                            candidates.append(s)
+            
+            if candidates:
+                # 夜勤目標が多い人を優先、同点ならランダム
+                random.shuffle(candidates)
+                candidates.sort(key=lambda x: x["night_target"], reverse=True)
+                
+                winner = candidates[0]
+                w_name = winner["name"]
+                
+                schedule[w_name][d] = "夜"
+                schedule[w_name][d+1] = "・"
+                night_counts[w_name] += 1
+                # 選ばれなかった人は何もしない(条件無視)
+
+        # ---------------------------------------------------
+        # Phase 2: 残りの夜勤割り当て
         # ---------------------------------------------------
         cands_night = [s for s in staff_data if s["type"] == 0 and s["night_target"] > 0]
         days_indices = list(range(DAYS))
@@ -352,7 +386,6 @@ def solve_shift(staff_data):
         regulars = [s for s in staff_data if s["type"] == 0]
         
         for d in range(DAYS):
-            # 遅番確保
             if not any(schedule[s["name"]][d] == "遅" for s in staff_data):
                 random.shuffle(regulars)
                 for s in regulars:
@@ -363,7 +396,6 @@ def solve_shift(staff_data):
                                 schedule[s["name"]][d] = "遅"
                                 break
             
-            # 早番確保
             if not any(schedule[s["name"]][d] == "早" for s in staff_data):
                 random.shuffle(regulars)
                 for s in regulars:
@@ -374,7 +406,6 @@ def solve_shift(staff_data):
                                 schedule[s["name"]][d] = "早"
                                 break
 
-            # 残り日勤
             random.shuffle(regulars)
             for s in regulars:
                 if schedule[s["name"]][d] == "":
@@ -384,7 +415,7 @@ def solve_shift(staff_data):
                             schedule[s["name"]][d] = "日"
 
         # ---------------------------------------------------
-        # Phase 4: 最終調整 (残りを通常の◎で埋める)
+        # Phase 4: 最終調整
         # ---------------------------------------------------
         for s in staff_data:
             for d in range(DAYS):
@@ -495,7 +526,6 @@ if st.session_state.get('shift_success', False):
     # テーブル表示
     # ------------------------------------------
     df_display = df_raw.copy()
-    # 集計用にはstripして判定
     df_display['夜勤'] = [list(map(str.strip, r)).count('夜') for r in df_raw.values]
     df_display['公休'] = [list(map(str.strip, r)).count('◎') for r in df_raw.values]
     
@@ -516,12 +546,10 @@ if st.session_state.get('shift_success', False):
         val_str = str(val)
         color = 'black'; bg_color = ''
         
-        # 背景色ロジック
-        if val_str == '◎ ':  # 希望休(スペースあり)
-            # ★ここを変更しました：深緑背景に白文字
+        if val_str == '◎ ': 
             bg_color = '#15803d'; color = 'white'; 
-        elif val_str == '◎': # 自動公休
-            bg_color = '#dcfce7'; # 薄い緑のまま
+        elif val_str == '◎': 
+            bg_color = '#dcfce7'; 
         elif val_str == '有':
             bg_color = '#fbcfe8'; 
         elif val_str == 'リ休':
