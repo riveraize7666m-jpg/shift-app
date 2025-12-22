@@ -14,14 +14,13 @@ from yaml.loader import SafeLoader
 # ==========================================
 # ユーザー: admin
 # パスワード: abc123
-# ハッシュ値: $2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW (事前に計算済み)
+# ハッシュ値: $2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW (計算済み)
 
 config = {
     'credentials': {
         'usernames': {
             'admin': {
                 'name': '管理者',
-                # ここに計算済みのハッシュ値を直接書くことで、エラーを回避します
                 'password': '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW',
                 'email': 'admin@example.com',
             }
@@ -40,7 +39,7 @@ config = {
 # ==========================================
 # 1. アプリの設定 & デザイン
 # ==========================================
-st.set_page_config(page_title="Shift Manager Pro v47", layout="wide", page_icon="🗓️")
+st.set_page_config(page_title="Shift Manager Pro v48", layout="wide", page_icon="🗓️")
 
 st.markdown("""
     <style>
@@ -60,13 +59,12 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 認証オブジェクトの作成
+# 認証オブジェクトの作成 (v48修正: preauthorizedを削除)
 authenticator = stauth.Authenticate(
     config['credentials'],
     config['cookie']['name'],
     config['cookie']['key'],
-    config['cookie']['expiry_days'],
-    config['preauthorized']
+    config['cookie']['expiry_days']
 )
 
 # ==========================================
@@ -103,8 +101,8 @@ if authentication_status:
         authenticator.logout('ログアウト', 'sidebar')
         st.markdown("---")
 
-    st.title("🗓️ Shift Manager Pro v47")
-    st.caption("クラウド対応：ログイン機能実装版 (v47)")
+    st.title("🗓️ Shift Manager Pro v48")
+    st.caption("クラウド対応：ログイン機能修正版")
 
     # ==========================================
     # 2. スタッフ管理機能
