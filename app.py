@@ -10,28 +10,425 @@ import re
 # ==========================================
 # 1. アプリの設定 & デザイン
 # ==========================================
-st.set_page_config(page_title="Shift Manager Pro v45", layout="wide", page_icon="🗓️")
+st.set_page_config(
+    page_title="Shift Manager Pro", 
+    layout="wide", 
+    page_icon="✦",
+    initial_sidebar_state="expanded"
+)
 
+# モダンでリッチなカスタムCSS
 st.markdown("""
-    <style>
-    .stApp { font-family: 'Helvetica Neue', Arial, sans-serif; }
-    .stButton>button {
-        width: 100%; border-radius: 12px; font-weight: bold;
-        background-color: #FF4B4B; color: white; height: 3em;
+<style>
+    /* Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
+    
+    /* ルート変数 */
+    :root {
+        --primary: #2563eb;
+        --primary-light: #3b82f6;
+        --primary-dark: #1d4ed8;
+        --accent: #f59e0b;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --neutral-50: #fafafa;
+        --neutral-100: #f5f5f5;
+        --neutral-200: #e5e5e5;
+        --neutral-300: #d4d4d4;
+        --neutral-600: #525252;
+        --neutral-700: #404040;
+        --neutral-800: #262626;
+        --neutral-900: #171717;
+        --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     }
-    .alert-box {
-        padding: 1rem; background-color: #fef2f2; border: 1px solid #f87171; 
-        border-radius: 8px; color: #991b1b; margin-bottom: 1rem;
+    
+    /* ベーススタイル */
+    .stApp {
+        font-family: 'Noto Sans JP', 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
     }
-    section[data-testid="stSidebar"] { background-color: #f8f9fa; }
+    
+    /* ヘッダータイトル */
+    .main-header {
+        background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 50%, #6d28d9 100%);
+        padding: 2.5rem 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-xl);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .main-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+        animation: shimmer 3s ease-in-out infinite;
+    }
+    
+    @keyframes shimmer {
+        0%, 100% { transform: rotate(0deg); }
+        50% { transform: rotate(5deg); }
+    }
+    
+    .main-header h1 {
+        color: white;
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: -0.02em;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .main-header p {
+        color: rgba(255,255,255,0.8);
+        font-size: 0.95rem;
+        margin: 0.5rem 0 0 0;
+        font-weight: 400;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* サイドバー */
+    section[data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border-right: 1px solid var(--neutral-200);
+    }
+    
+    section[data-testid="stSidebar"] > div {
+        padding-top: 1.5rem;
+    }
+    
+    /* サイドバーヘッダー */
+    .sidebar-header {
+        font-family: 'Outfit', 'Noto Sans JP', sans-serif;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--neutral-600);
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--primary);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    /* ボタンスタイル */
+    .stButton > button {
+        width: 100%;
+        border: none;
+        border-radius: 12px;
+        font-family: 'Noto Sans JP', sans-serif;
+        font-weight: 600;
+        font-size: 0.9rem;
+        padding: 0.75rem 1.5rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .stButton > button[kind="primary"] {
+        background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+        color: white;
+    }
+    
+    .stButton > button[kind="primary"]:hover {
+        background: linear-gradient(135deg, #1d4ed8 0%, #4338ca 100%);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .stButton > button:not([kind="primary"]) {
+        background: white;
+        color: var(--neutral-700);
+        border: 1px solid var(--neutral-200);
+    }
+    
+    .stButton > button:not([kind="primary"]):hover {
+        background: var(--neutral-50);
+        border-color: var(--primary-light);
+        color: var(--primary);
+    }
+    
+    /* 入力フィールド */
+    .stTextInput > div > div > input,
+    .stNumberInput > div > div > input,
+    .stSelectbox > div > div > div {
+        border-radius: 10px !important;
+        border: 1.5px solid var(--neutral-200) !important;
+        padding: 0.6rem 0.9rem !important;
+        font-family: 'Noto Sans JP', sans-serif !important;
+        font-size: 0.9rem !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    .stTextInput > div > div > input:focus,
+    .stNumberInput > div > div > input:focus {
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+    }
+    
+    /* エキスパンダー */
+    .streamlit-expanderHeader {
+        font-family: 'Noto Sans JP', sans-serif;
+        font-weight: 500;
+        font-size: 0.95rem;
+        background: white;
+        border-radius: 12px !important;
+        border: 1px solid var(--neutral-200);
+        padding: 0.75rem 1rem !important;
+        transition: all 0.2s ease;
+    }
+    
+    .streamlit-expanderHeader:hover {
+        background: var(--neutral-50);
+        border-color: var(--primary-light);
+    }
+    
+    details[open] > .streamlit-expanderHeader {
+        border-bottom-left-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        border-bottom: none;
+    }
+    
+    .streamlit-expanderContent {
+        background: white;
+        border: 1px solid var(--neutral-200);
+        border-top: none;
+        border-radius: 0 0 12px 12px;
+        padding: 1rem !important;
+    }
+    
+    /* アラートボックス */
+    .alert-container {
+        background: white;
+        border-radius: 16px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow-md);
+        border-left: 4px solid var(--warning);
+    }
+    
+    .alert-title {
+        font-family: 'Outfit', 'Noto Sans JP', sans-serif;
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--neutral-800);
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .alert-item {
+        padding: 0.5rem 0;
+        font-size: 0.9rem;
+        color: var(--neutral-700);
+        border-bottom: 1px solid var(--neutral-100);
+    }
+    
+    .alert-item:last-child {
+        border-bottom: none;
+    }
+    
+    /* サクセスメッセージ */
+    .success-banner {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 1.25rem 1.5rem;
+        border-radius: 14px;
+        margin-bottom: 1.5rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .success-banner span {
+        font-size: 1.5rem;
+    }
+    
+    /* データフレームコンテナ */
+    .dataframe-container {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-lg);
+        margin-top: 1rem;
+    }
+    
+    /* セクション区切り */
+    .section-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--neutral-200), transparent);
+        margin: 1.5rem 0;
+    }
+    
+    /* カード */
+    .info-card {
+        background: white;
+        border-radius: 14px;
+        padding: 1.25rem;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--neutral-100);
+        margin-bottom: 1rem;
+    }
+    
+    .info-card-header {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--neutral-600);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+    }
+    
+    .info-card-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--neutral-900);
+    }
+    
+    /* フォーム */
+    .stForm {
+        background: var(--neutral-50);
+        border-radius: 14px;
+        padding: 1rem;
+        border: 1px solid var(--neutral-200);
+    }
+    
+    /* ダウンロードボタン */
+    .stDownloadButton > button {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 12px !important;
+        font-weight: 600 !important;
+        padding: 0.75rem 1.5rem !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .stDownloadButton > button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: var(--shadow-lg) !important;
+    }
+    
+    /* プログレスバー */
+    .stProgress > div > div > div {
+        background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+        border-radius: 10px;
+    }
+    
+    /* チェックボックス */
+    .stCheckbox > label {
+        font-family: 'Noto Sans JP', sans-serif;
+        font-size: 0.9rem;
+    }
+    
+    /* ファイルアップローダー */
+    .stFileUploader > div {
+        border-radius: 12px !important;
+        border: 2px dashed var(--neutral-300) !important;
+        padding: 1rem !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    .stFileUploader > div:hover {
+        border-color: var(--primary) !important;
+        background: var(--neutral-50) !important;
+    }
+    
+    /* ラベル */
+    .stTextInput > label,
+    .stNumberInput > label,
+    .stSelectbox > label {
+        font-family: 'Noto Sans JP', sans-serif !important;
+        font-size: 0.85rem !important;
+        font-weight: 500 !important;
+        color: var(--neutral-700) !important;
+    }
+    
+    /* スクロールバー */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: var(--neutral-100);
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: var(--neutral-300);
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--neutral-400);
+    }
+    
+    /* ダークモード対応 */
     @media (prefers-color-scheme: dark) {
-        section[data-testid="stSidebar"] { background-color: #262730; }
+        .stApp {
+            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+        }
+        
+        section[data-testid="stSidebar"] {
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            border-right: 1px solid #334155;
+        }
+        
+        .streamlit-expanderHeader,
+        .streamlit-expanderContent,
+        .alert-container,
+        .dataframe-container,
+        .info-card {
+            background: #1e293b;
+            border-color: #334155;
+        }
+        
+        .stTextInput > div > div > input,
+        .stNumberInput > div > div > input {
+            background: #1e293b !important;
+            color: #f1f5f9 !important;
+            border-color: #334155 !important;
+        }
     }
-    </style>
+    
+    /* アニメーション */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .animate-in {
+        animation: fadeIn 0.4s ease-out forwards;
+    }
+</style>
 """, unsafe_allow_html=True)
 
-st.title("🗓️ Shift Manager Pro v45")
-st.caption("クラウド対応：連勤ルール修正版（明け込み連勤計算）")
+# ヘッダー
+st.markdown("""
+<div class="main-header">
+    <h1>✦ Shift Manager Pro</h1>
+    <p>スマートなシフト自動作成ツール — 連勤ルール対応版</p>
+</div>
+""", unsafe_allow_html=True)
 
 # ==========================================
 # 2. スタッフ管理機能
@@ -43,12 +440,12 @@ if "staff_list" not in st.session_state:
     ]
 
 with st.sidebar:
-    st.header("👥 スタッフ管理")
+    st.markdown('<div class="sidebar-header">👥 スタッフ管理</div>', unsafe_allow_html=True)
     
     with st.form("add_staff_form", clear_on_submit=True):
-        new_name = st.text_input("名前を入力")
+        new_name = st.text_input("名前", placeholder="新しいスタッフ名")
         new_type = st.selectbox("属性", ["常勤", "パート(日勤のみ)", "パート(早番のみ)"], index=0)
-        submitted = st.form_submit_button("＋ スタッフを追加")
+        submitted = st.form_submit_button("➕ スタッフを追加", type="primary")
         
         if submitted and new_name:
             type_code = 0
@@ -56,16 +453,17 @@ with st.sidebar:
             elif new_type == "パート(早番のみ)": type_code = 2
             
             st.session_state.staff_list.append({"name": new_name, "type": type_code})
-            st.success(f"{new_name}さんを追加しました")
+            st.success(f"✓ {new_name}さんを追加しました")
             st.rerun()
 
     if st.session_state.staff_list:
-        del_name = st.selectbox("削除するスタッフ", [s["name"] for s in st.session_state.staff_list], key="del_select")
-        if st.button("削除実行"):
+        st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+        del_name = st.selectbox("削除対象", [s["name"] for s in st.session_state.staff_list], key="del_select")
+        if st.button("🗑️ 削除する"):
             st.session_state.staff_list = [s for s in st.session_state.staff_list if s["name"] != del_name]
             st.rerun()
     
-    st.markdown("---")
+    st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
 # ==========================================
 # 3. 設定の読込・保存
@@ -85,18 +483,18 @@ def load_settings_callback():
             st.session_state.load_error = f"エラー: {e}"
 
 with st.sidebar:
-    st.header("📂 設定の保存・復元")
-    st.file_uploader("設定ファイル(.json)", type=["json"], key="setting_file_uploader", on_change=load_settings_callback)
+    st.markdown('<div class="sidebar-header">📂 設定ファイル</div>', unsafe_allow_html=True)
+    st.file_uploader("設定を復元", type=["json"], key="setting_file_uploader", on_change=load_settings_callback, label_visibility="collapsed")
     if st.session_state.get("load_success_flag", False):
-        st.success("復元完了！")
+        st.success("✓ 復元完了")
         st.session_state.load_success_flag = False
-    st.markdown("---")
+    st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
 # ==========================================
 # 4. 年月・全体設定
 # ==========================================
 with st.sidebar:
-    st.header("📅 シフト設定")
+    st.markdown('<div class="sidebar-header">📅 シフト設定</div>', unsafe_allow_html=True)
     if "input_year" not in st.session_state: st.session_state.input_year = 2026
     if "input_month" not in st.session_state: st.session_state.input_month = 2
 
@@ -107,10 +505,11 @@ with st.sidebar:
     _, DAYS = calendar.monthrange(YEAR, MONTH)
     
     if "target_off" not in st.session_state: st.session_state.target_off = 9
-    TARGET_OFF_DAYS = st.number_input("常勤の公休数 (目標)", 1, 15, key="target_off")
+    TARGET_OFF_DAYS = st.number_input("常勤の公休数", 1, 15, key="target_off", help="目標となる公休日数を設定")
     
-    st.markdown("---")
-    if st.button("シフトを作成する", type="primary"):
+    st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+    
+    if st.button("🚀 シフトを作成", type="primary", use_container_width=True):
         st.session_state.run_solver = True
     else:
         st.session_state.run_solver = False
@@ -118,7 +517,7 @@ with st.sidebar:
 # ==========================================
 # 5. 各スタッフ詳細設定
 # ==========================================
-st.sidebar.header("👤 個人条件設定")
+st.sidebar.markdown('<div class="sidebar-header">👤 個人設定</div>', unsafe_allow_html=True)
 SHIFT_OPTIONS = ["早", "日", "遅", "夜", "・", "◎", "有", "リ休"]
 staff_data_list = []
 
@@ -133,13 +532,15 @@ for idx, staff in enumerate(st.session_state.staff_list):
     name = staff["name"]
     stype = staff["type"]
     
-    with st.sidebar.expander(f"{name}", expanded=False):
+    type_emoji = "🔵" if stype == 0 else "🟢" if stype == 1 else "🟡"
+    
+    with st.sidebar.expander(f"{type_emoji} {name}", expanded=False):
         type_labels = ["常勤", "パート(日勤のみ)", "パート(早番のみ)"]
         current_idx = 0
         if stype == 1: current_idx = 1
         elif stype == 2: current_idx = 2
         
-        new_type_label = st.selectbox("属性変更", type_labels, index=current_idx, key=f"type_c_{name}_{idx}")
+        new_type_label = st.selectbox("属性", type_labels, index=current_idx, key=f"type_c_{name}_{idx}")
         new_code = 0
         if new_type_label == "パート(日勤のみ)": new_code = 1
         elif new_type_label == "パート(早番のみ)": new_code = 2
@@ -149,39 +550,50 @@ for idx, staff in enumerate(st.session_state.staff_list):
         c1, c2 = st.columns(2)
         key_prev = f"prev_{name}"
         if key_prev not in st.session_state: st.session_state[key_prev] = SHIFT_OPTIONS[5]
-        with c1: prev_shift = st.selectbox("前月末", SHIFT_OPTIONS, key=key_prev)
+        with c1: prev_shift = st.selectbox("前月末シフト", SHIFT_OPTIONS, key=key_prev)
         
         with c2:
             key_streak = f"streak_{name}"
             if key_streak not in st.session_state: st.session_state[key_streak] = 0
-            prev_streak = st.number_input("連勤", 0, 10, key=key_streak)
+            prev_streak = st.number_input("連勤日数", 0, 10, key=key_streak)
         
         f1, f2, f3 = "", "", ""
-        if st.checkbox("年始固定(1/1-3)", key=f"open_fix_{name}"):
+        if st.checkbox("年始固定シフト", key=f"open_fix_{name}"):
             fix_opts = [""] + SHIFT_OPTIONS
             key_f1, key_f2, key_f3 = f"f1_{name}", f"f2_{name}", f"f3_{name}"
             if key_f1 not in st.session_state: st.session_state[key_f1] = ""
             if key_f2 not in st.session_state: st.session_state[key_f2] = ""
             if key_f3 not in st.session_state: st.session_state[key_f3] = ""
-            f1 = st.selectbox("1日", fix_opts, key=key_f1)
-            f2 = st.selectbox("2日", fix_opts, key=key_f2)
-            f3 = st.selectbox("3日", fix_opts, key=key_f3)
+            cols = st.columns(3)
+            with cols[0]: f1 = st.selectbox("1日", fix_opts, key=key_f1)
+            with cols[1]: f2 = st.selectbox("2日", fix_opts, key=key_f2)
+            with cols[2]: f3 = st.selectbox("3日", fix_opts, key=key_f3)
 
         night_target_val = 0
-        if stype != 0: st.info("夜勤なし")
+        if stype != 0:
+            st.info("💡 このスタッフは夜勤対象外です")
         else:
             key_night = f"night_{name}"
             if key_night not in st.session_state: st.session_state[key_night] = 4
-            night_target_val = st.number_input("夜勤目標", 0, 10, key=key_night)
+            night_target_val = st.number_input("🌙 夜勤目標回数", 0, 10, key=key_night)
 
-        req_n_in = st.text_input("夜勤希望 (例:7,20)", key=f"req_n_{name}")
-        req_e_in = st.text_input("早番希望", key=f"req_e_{name}")
-        req_l_in = st.text_input("遅番希望", key=f"req_l_{name}")
-        req_d_in = st.text_input("日勤希望", key=f"req_d_{name}")
-        off_in = st.text_input("希望休", key=f"off_{name}")
-        work_in = st.text_input("出勤希望", key=f"work_{name}")
-        ref_in = st.text_input("リ休", key=f"ref_{name}")
-        paid_in = st.text_input("有休", key=f"paid_{name}")
+        st.markdown("**希望シフト** <small style='color:#666'>（例: 7,20）</small>", unsafe_allow_html=True)
+        c1, c2 = st.columns(2)
+        with c1:
+            req_n_in = st.text_input("夜勤希望", key=f"req_n_{name}", label_visibility="collapsed", placeholder="夜勤希望日")
+            req_l_in = st.text_input("遅番希望", key=f"req_l_{name}", label_visibility="collapsed", placeholder="遅番希望日")
+        with c2:
+            req_e_in = st.text_input("早番希望", key=f"req_e_{name}", label_visibility="collapsed", placeholder="早番希望日")
+            req_d_in = st.text_input("日勤希望", key=f"req_d_{name}", label_visibility="collapsed", placeholder="日勤希望日")
+        
+        st.markdown("**休暇設定**", unsafe_allow_html=True)
+        c1, c2 = st.columns(2)
+        with c1:
+            off_in = st.text_input("希望休", key=f"off_{name}", label_visibility="collapsed", placeholder="希望休")
+            ref_in = st.text_input("リ休", key=f"ref_{name}", label_visibility="collapsed", placeholder="リフレッシュ休暇")
+        with c2:
+            work_in = st.text_input("出勤希望", key=f"work_{name}", label_visibility="collapsed", placeholder="出勤希望日")
+            paid_in = st.text_input("有休", key=f"paid_{name}", label_visibility="collapsed", placeholder="有給休暇")
 
     staff_data_list.append({
         "name": name, "type": stype, "night_target": night_target_val,
@@ -196,7 +608,7 @@ for idx, staff in enumerate(st.session_state.staff_list):
     })
 
 # 保存ボタン
-st.sidebar.markdown("---")
+st.sidebar.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 export_data = {
     'input_year': st.session_state.get('input_year'),
     'input_month': st.session_state.get('input_month'),
@@ -213,13 +625,13 @@ for s in st.session_state.staff_list:
     ]
     for k in keys:
         if k in st.session_state: export_data[k] = st.session_state[k]
-st.sidebar.download_button("💾 設定を保存", json.dumps(export_data, indent=2, ensure_ascii=False), 'shift_settings.json', 'application/json')
+st.sidebar.download_button("💾 設定を保存", json.dumps(export_data, indent=2, ensure_ascii=False), 'shift_settings.json', 'application/json', use_container_width=True)
 
 # ==========================================
 # 6. 計算ロジック
 # ==========================================
 def solve_shift(staff_data):
-    progress_text = "AIがシフトを作成中..."
+    progress_text = "✨ AIがシフトを最適化中..."
     my_bar = st.progress(0, text=progress_text)
 
     best_schedule = None
@@ -235,6 +647,9 @@ def solve_shift(staff_data):
             work_limits[s["name"]] = DAYS - (TARGET_OFF_DAYS + extra_off)
 
     for attempt in range(max_attempts):
+        if attempt % 100 == 0:
+            my_bar.progress(min(attempt / max_attempts, 0.95), text=progress_text)
+            
         schedule = {s["name"]: [""] * DAYS for s in staff_data}
         night_counts = {s["name"]: 0 for s in staff_data}
         
@@ -254,7 +669,6 @@ def solve_shift(staff_data):
             if is_off_type: return True
             
             streak = 0
-            # ★夜勤は明けと合わせて2日分としてカウントする
             current_add = 2 if shift_type.strip() == "夜" else 1
             
             temp_d = day_idx - 1
@@ -348,10 +762,9 @@ def solve_shift(staff_data):
                         if d + 2 < DAYS and schedule[name][d+2] == "": schedule[name][d+2] = "◎"
                         break
 
-        # Phase 3: 日勤埋め合わせ (まずは埋める)
+        # Phase 3: 日勤埋め合わせ
         regulars = [s for s in staff_data if s["type"] == 0]
         
-        # 3.1: 必須シフト(早/遅)の穴埋め
         for d in range(DAYS):
             if not any(schedule[s["name"]][d] == "遅" for s in staff_data):
                 random.shuffle(regulars)
@@ -372,7 +785,6 @@ def solve_shift(staff_data):
                                 schedule[s["name"]][d] = "早"
                                 break
 
-        # 3.2: 日勤で労働日数限界まで埋める
         for s in regulars:
             empty_days = [d for d in range(DAYS) if schedule[s["name"]][d] == ""]
             random.shuffle(empty_days)
@@ -382,9 +794,7 @@ def solve_shift(staff_data):
                 if check_rules(s["name"], d, schedule, "日"):
                     schedule[s["name"]][d] = "日"
 
-        # ---------------------------------------------------
-        # Phase 4: 最終調整 (不足日の穴埋め・平準化)
-        # ---------------------------------------------------
+        # Phase 4: 最終調整
         for s in staff_data:
             for d in range(DAYS):
                 if schedule[s["name"]][d] == "": schedule[s["name"]][d] = "◎"
@@ -434,9 +844,7 @@ def solve_shift(staff_data):
             
             if not swapped: break
 
-        # ---------------------------------------------------
         # スコアリング
-        # ---------------------------------------------------
         score = 0
         
         for s in staff_data:
@@ -469,7 +877,7 @@ def solve_shift(staff_data):
         if shortage_penalty == 0 and night_missing == 0 and score > -50:
             break
 
-    my_bar.progress(100, text="完了！")
+    my_bar.progress(100, text="✓ 完了しました")
     return best_schedule
 
 # ==========================================
@@ -477,7 +885,7 @@ def solve_shift(staff_data):
 # ==========================================
 if st.session_state.get('run_solver', False):
     if not staff_data_list:
-        st.error("スタッフが登録されていません。")
+        st.error("⚠️ スタッフが登録されていません。サイドバーからスタッフを追加してください。")
         st.session_state.run_solver = False
     else:
         result = solve_shift(staff_data_list)
@@ -493,7 +901,13 @@ if st.session_state.get('shift_success', False):
     current_month = st.session_state.current_month
     result = st.session_state.shift_result
     
-    st.success(f"🎉 シフト案を作成しました（{current_year}年{current_month}月）")
+    # サクセスメッセージ
+    st.markdown(f"""
+    <div class="success-banner">
+        <span>🎉</span>
+        <div>シフト案を作成しました — {current_year}年{current_month}月</div>
+    </div>
+    """, unsafe_allow_html=True)
     
     # ------------------------------------------
     # アラート
@@ -512,10 +926,10 @@ if st.session_state.get('shift_success', False):
         date_str = f"{current_month}/{d_idx+1}({wd_ja})"
 
         if day_cnt < 3:
-            alerts.append(f"⚠️ {date_str}: 日勤帯が {day_cnt}名 しかいません")
+            alerts.append(("warning", f"{date_str}: 日勤帯が {day_cnt}名"))
         
         if '夜' not in col_values:
-             alerts.append(f"🔴 {date_str}: 夜勤者がいません")
+             alerts.append(("error", f"{date_str}: 夜勤者なし"))
 
     for name in df_raw.index:
         s_info = next(s for s in staff_data_list if s["name"] == name)
@@ -524,20 +938,28 @@ if st.session_state.get('shift_success', False):
         if s_info["type"] == 0:
             off_cnt = row.count("◎")
             if off_cnt != TARGET_OFF_DAYS:
-                alerts.append(f"⚠️ {name}: 公休が {off_cnt}日 (目標{TARGET_OFF_DAYS})")
+                alerts.append(("info", f"{name}: 公休 {off_cnt}日 (目標{TARGET_OFF_DAYS})"))
         
         if s_info["night_target"] > 0:
             n_cnt = row.count("夜")
             if n_cnt != s_info["night_target"]:
-                alerts.append(f"ℹ️ {name}: 夜勤 {n_cnt}回 (目標{s_info['night_target']})")
+                alerts.append(("info", f"{name}: 夜勤 {n_cnt}回 (目標{s_info['night_target']})"))
 
     if alerts:
-        with st.expander("🚨 シフトの要確認ポイント", expanded=True):
-            for a in alerts: st.write(a)
+        with st.expander("📋 確認ポイント", expanded=True):
+            for alert_type, msg in alerts:
+                if alert_type == "error":
+                    st.markdown(f"🔴 {msg}")
+                elif alert_type == "warning":
+                    st.markdown(f"⚠️ {msg}")
+                else:
+                    st.markdown(f"ℹ️ {msg}")
 
     # ------------------------------------------
     # テーブル表示
     # ------------------------------------------
+    st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
+    
     df_display = df_raw.copy()
     df_display['夜勤'] = [list(map(str.strip, r)).count('夜') for r in df_raw.values]
     df_display['公休'] = [list(map(str.strip, r)).count('◎') for r in df_raw.values]
@@ -557,32 +979,112 @@ if st.session_state.get('shift_success', False):
     
     def color_shift(val):
         val_str = str(val)
-        color = 'black'; bg_color = ''
+        style = 'text-align: center; font-weight: 500; border-radius: 4px; '
         
         if val_str == '◎ ': 
-            bg_color = '#15803d'; color = 'white'; 
+            return style + 'background: linear-gradient(135deg, #059669, #10b981); color: white;'
         elif val_str == '◎': 
-            bg_color = '#dcfce7'; 
+            return style + 'background: #d1fae5; color: #065f46;'
         elif val_str == '有':
-            bg_color = '#fbcfe8'; 
+            return style + 'background: linear-gradient(135deg, #db2777, #ec4899); color: white;'
         elif val_str == 'リ休':
-            bg_color = '#ffedd5'; 
-            
-        elif val_str == '夜': bg_color = '#1E3A8A'; color = 'white'
-        elif val_str == '・': bg_color = '#BFDBFE'
-        elif val_str == '早': bg_color = '#FDE047'
-        elif val_str == '遅': bg_color = '#FDBA74'
-        elif val_str == '日': bg_color = '#FFFFFF'
-        
+            return style + 'background: linear-gradient(135deg, #ea580c, #f97316); color: white;'
+        elif val_str == '夜': 
+            return style + 'background: linear-gradient(135deg, #1e3a8a, #3730a3); color: white;'
+        elif val_str == '・': 
+            return style + 'background: #dbeafe; color: #1e40af;'
+        elif val_str == '早': 
+            return style + 'background: linear-gradient(135deg, #ca8a04, #eab308); color: #422006;'
+        elif val_str == '遅': 
+            return style + 'background: linear-gradient(135deg, #c2410c, #ea580c); color: white;'
+        elif val_str == '日': 
+            return style + 'background: #fafafa; color: #171717; border: 1px solid #e5e5e5;'
         elif isinstance(val, (int, float)):
-            if val < 3: bg_color = '#FECACA'; font_weight='bold'
-            else: bg_color = '#F0F0F0'; font_weight='normal'
-            return f'background-color: {bg_color}; color: black; font-weight: {font_weight}; border: 1px solid #ddd;'
+            if val < 3: 
+                return style + 'background: #fecaca; color: #991b1b; font-weight: 700;'
+            else: 
+                return style + 'background: #f5f5f5; color: #525252;'
         
-        return f'background-color: {bg_color}; color: {color}; border: 1px solid #ddd;'
+        return style + 'background: white; color: #525252;'
 
-    st.dataframe(df_display.style.map(color_shift), use_container_width=True)
+    st.dataframe(
+        df_display.style.map(color_shift),
+        use_container_width=True,
+        height=400
+    )
     
-    df_csv = df_display.replace("◎ ", "◎")
-    csv = df_csv.to_csv(sep=",").encode('utf-8_sig')
-    st.download_button("📥 CSVをダウンロード", csv, f'shift_{current_year}_{current_month}.csv', 'text/csv')
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # ダウンロードボタン
+    col1, col2, col3 = st.columns([1, 1, 2])
+    with col1:
+        df_csv = df_display.replace("◎ ", "◎")
+        csv = df_csv.to_csv(sep=",").encode('utf-8_sig')
+        st.download_button(
+            "📥 CSVダウンロード", 
+            csv, 
+            f'shift_{current_year}_{current_month}.csv', 
+            'text/csv',
+            use_container_width=True
+        )
+
+else:
+    # 初期状態の表示
+    st.markdown("""
+    <div style="
+        background: white;
+        border-radius: 20px;
+        padding: 3rem;
+        text-align: center;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        margin-top: 2rem;
+    ">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">📋</div>
+        <h2 style="color: #171717; font-weight: 600; margin-bottom: 0.5rem;">シフトを作成しましょう</h2>
+        <p style="color: #525252; font-size: 1rem;">
+            サイドバーでスタッフと条件を設定し、<br>
+            「シフトを作成」ボタンをクリックしてください
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # クイックガイド
+    st.markdown("""
+    <div style="
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin-top: 2rem;
+    ">
+        <div style="
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+        ">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">👥</div>
+            <h4 style="color: #1e40af; font-weight: 600; margin: 0;">Step 1</h4>
+            <p style="color: #3730a3; font-size: 0.9rem; margin: 0.5rem 0 0 0;">スタッフを登録</p>
+        </div>
+        <div style="
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+        ">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚙️</div>
+            <h4 style="color: #92400e; font-weight: 600; margin: 0;">Step 2</h4>
+            <p style="color: #a16207; font-size: 0.9rem; margin: 0.5rem 0 0 0;">条件を設定</p>
+        </div>
+        <div style="
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+        ">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🚀</div>
+            <h4 style="color: #065f46; font-weight: 600; margin: 0;">Step 3</h4>
+            <p style="color: #047857; font-size: 0.9rem; margin: 0.5rem 0 0 0;">シフト作成</p>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
