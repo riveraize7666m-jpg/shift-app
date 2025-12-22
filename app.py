@@ -30,10 +30,8 @@ config = {
         'expiry_days': 30,
         'key': 'some_signature_key',
         'name': 'some_cookie_name'
-    },
-    'preauthorized': {
-        'emails': []
     }
+    # preauthorized は削除 (DeprecationError回避のため)
 }
 
 # ==========================================
@@ -59,7 +57,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 認証オブジェクトの作成 (v48修正: preauthorizedを削除)
+# 認証オブジェクトの作成 (v48修正: preauthorized引数を削除)
 authenticator = stauth.Authenticate(
     config['credentials'],
     config['cookie']['name'],
