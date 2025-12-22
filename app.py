@@ -31,7 +31,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("🗓️ Shift Manager Pro v44")
-st.caption("クラウド対応：最終調整（人数平準化）ロジック強化版")
+st.caption("クラウド対応：平準化ロジック修正版")
 
 # ==========================================
 # 2. スタッフ管理機能
@@ -324,7 +324,7 @@ def solve_shift(staff_data):
                 schedule[w_name][d+1] = "・"
                 night_counts[w_name] += 1
 
-        # Phase 2: 残りの夜勤
+        # Phase 2: 残りの夜勤割り当て
         cands_night = [s for s in staff_data if s["type"] == 0 and s["night_target"] > 0]
         days_indices = list(range(DAYS))
         random.shuffle(days_indices)
@@ -338,6 +338,7 @@ def solve_shift(staff_data):
                     if d + 2 < DAYS:
                         val_next2 = schedule[name][d+2].strip()
                         if val_next2 != "" and val_next2 not in ["◎", "有", "リ休"]: continue
+
                     if check_rules(name, d, schedule, "夜"):
                         schedule[name][d] = "夜"
                         night_counts[name] += 1
@@ -345,7 +346,7 @@ def solve_shift(staff_data):
                         if d + 2 < DAYS and schedule[name][d+2] == "": schedule[name][d+2] = "◎"
                         break
 
-        # Phase 3: 日勤埋め (まずは埋める)
+        # Phase 3: 日勤埋め合わせ (まずは埋める)
         regulars = [s for s in staff_data if s["type"] == 0]
         
         # 3.1: 必須シフト(早/遅)の穴埋め
@@ -376,91 +377,82 @@ def solve_shift(staff_data):
             for d in empty_days:
                 curr_work = sum([1 for x in schedule[s["name"]] if x.strip() in ["早","日","遅","夜","・"]])
                 if curr_work >= work_limits[s["name"]]: break
-                
-                # とりあえず埋める
                 if check_rules(s["name"], d, schedule, "日"):
                     schedule[s["name"]][d] = "日"
 
-        # 残りは公休
+        # ---------------------------------------------------
+        # Phase 4: 最終調整 (不足日の穴埋め・平準化)
+        # ---------------------------------------------------
+        # まず空白を公休で埋める(ベースライン)
         for s in staff_data:
             for d in range(DAYS):
                 if schedule[s["name"]][d] == "": schedule[s["name"]][d] = "◎"
 
-        # Phase 4: 最終調整 (スワップロジック)
-        # 人員不足の日(target)と、人員余剰の日(source)を見つけて、
-        # sourceで働いていてtargetで休んでいる人を入れ替える
-        for _ in range(5): # 5回繰り返して収束させる
-            # 日ごとの人数カウント
+        # 平準化ロジック (Swap)
+        # 人員が3名未満の日(不足日)に対し、4名以上の日(余剰日)から人を移動させる
+        for _ in range(10): # 最大10回試行して収束させる
+            # 日毎の人数カウント
             day_counts = {}
             for d in range(DAYS):
-                day_counts[d] = sum([1 for s in staff_data if schedule[s["name"]][d].strip() in ["早","日","遅"]])
+                cnt = sum(1 for s in staff_data if schedule[s["name"]][d].strip() in ["早", "日", "遅"])
+                day_counts[d] = cnt
             
-            shortage_days = [d for d, c in day_counts.items() if c < 3]
+            # 不足日と余剰日を特定
+            short_days = [d for d, c in day_counts.items() if c < 3]
             surplus_days = [d for d, c in day_counts.items() if c > 3]
             
-            if not shortage_days: break # 不足なしなら終了
+            if not short_days: break # 解消したら終了
             
-            random.shuffle(shortage_days)
+            # ランダム性を持たせる
+            random.shuffle(short_days)
             random.shuffle(surplus_days)
             
-            swapped_any = False
-            for short_d in shortage_days:
+            swapped = False
+            for short_d in short_days:
+                if swapped: break
                 for surp_d in surplus_days:
-                    # スワップ候補者を探す: Surplus日で働き、Short日で休んでいる常勤
-                    candidates = []
-                    for s in regulars:
-                        if schedule[s["name"]][surp_d].strip() in ["早","日","遅"] and \
-                           schedule[s["name"]][short_d].strip() == "◎":
-                           candidates.append(s)
+                    if swapped: break
                     
-                    random.shuffle(candidates)
-                    for cand in candidates:
-                        name = cand["name"]
-                        shift_to_move = schedule[name][surp_d] # 移動させるシフト(日/早/遅)
+                    # 候補者を探す: 余剰日に勤務していて、不足日が公休(◎)の人
+                    random.shuffle(regulars)
+                    for staff in regulars:
+                        name = staff["name"]
+                        shift_src = schedule[name][surp_d] # 移動元シフト
+                        shift_dst = schedule[name][short_d] # 移動先(現在は◎のはず)
                         
-                        # 仮に入れ替えたとしてルールチェック
-                        # 1. Short日にShiftを入れる
-                        # 2. Surplus日を◎にする
+                        if shift_src not in ["早", "日", "遅"]: continue
+                        if shift_dst != "◎": continue # 自動公休のみ対象(希望休◎_は動かさない)
                         
-                        # まずShort日のチェック
-                        # (Surplus日を◎にするのは基本的にルール違反にならないのでShort日を重点チェック)
+                        # ルールチェック: 不足日にshift_srcを入れることができるか？
+                        # 1. 基本ルール(連勤、インターバル戻り等)
+                        if not check_rules(name, short_d, schedule, shift_src): continue
                         
-                        # 一時的に書き換え
-                        original_short = schedule[name][short_d]
-                        original_surp = schedule[name][surp_d]
-                        
-                        schedule[name][short_d] = shift_to_move
-                        schedule[name][surp_d] = "◎"
-                        
-                        # ルール確認 (Short日周辺とSurplus日周辺)
-                        valid_short = check_rules(name, short_d, schedule, shift_to_move)
-                        # Surplus日が休みになることのチェックは連勤が切れるだけなのでほぼOKだが
-                        # 前日が夜勤明けでないか等は確認必要
-                        valid_surp = True
-                        if surp_d > 0 and schedule[name][surp_d-1].strip() == "・": valid_surp = False # 明けの翌日は休みOKだが念のため
-                        # 逆に、Surplus日を休みにしたことで「連勤不足」になるルールはない
-                        
-                        if valid_short and valid_surp:
-                            # 採用！
-                            day_counts[short_d] += 1
-                            day_counts[surp_d] -= 1
-                            swapped_any = True
-                            break # 次のShort日へ
-                        else:
-                            # 戻す
-                            schedule[name][short_d] = original_short
-                            schedule[name][surp_d] = original_surp
-                    
-                    if day_counts[short_d] >= 3: break # 解消したら次へ
-                
-            if not swapped_any: break
+                        # 2. 【重要】前方インターバルチェック (check_rulesは後方しか見ない場合があるため)
+                        valid_forward = True
+                        if short_d < DAYS - 1:
+                            next_shift = schedule[name][short_d+1].strip()
+                            if shift_src == "遅" and next_shift in ["早", "日"]: valid_forward = False
+                            if shift_src == "日" and next_shift == "早": valid_forward = False
+                        if not valid_forward: continue
 
+                        # すべてOKならスワップ実行
+                        schedule[name][short_d] = shift_src
+                        schedule[name][surp_d] = "◎"
+                        swapped = True
+                        break # 次の不足日へ
+            
+            if not swapped: break # これ以上改善できない
+
+        # ---------------------------------------------------
         # スコアリング
+        # ---------------------------------------------------
         score = 0
+        
         for s in staff_data:
             if s["type"] == 0:
                 cnt = sum([1 for x in schedule[s["name"]] if x.strip() == "◎"])
                 score -= abs(cnt - TARGET_OFF_DAYS) * 100
+        
         for s in staff_data:
             tgt = s["night_target"]
             if tgt > 0:
