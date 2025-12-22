@@ -931,8 +931,8 @@ if st.session_state.get('shift_success', False):
 
     if alerts:
         # カスタムアラートボックス
-        alert_html = ['<div style="background: #1e293b; border-radius: 16px; padding: 1.25rem; margin-bottom: 1.5rem; border: 1px solid #475569; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">']
-        alert_html.append('<div style="font-weight: 600; font-size: 1rem; color: #f1f5f9; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">📋 確認ポイント</div>')
+        alert_html = '<div style="background: #1e293b; border-radius: 16px; padding: 1.25rem; margin-bottom: 1.5rem; border: 1px solid #475569; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">'
+        alert_html += '<div style="font-weight: 600; font-size: 1rem; color: #f1f5f9; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">📋 確認ポイント</div>'
         
         for alert_type, msg in alerts:
             if alert_type == "error":
@@ -951,14 +951,10 @@ if st.session_state.get('shift_success', False):
                 border = "#3b82f6"
                 color = "#93c5fd"
             
-            alert_html.append(f'''
-            <div style="background: {bg}; border-left: 3px solid {border}; padding: 0.6rem 1rem; margin-bottom: 0.5rem; border-radius: 0 8px 8px 0;">
-                <span style="color: {color}; font-size: 0.9rem;">{icon} {msg}</span>
-            </div>
-            ''')
+            alert_html += f'<div style="background: {bg}; border-left: 3px solid {border}; padding: 0.6rem 1rem; margin-bottom: 0.5rem; border-radius: 0 8px 8px 0;"><span style="color: {color}; font-size: 0.9rem;">{icon} {msg}</span></div>'
         
-        alert_html.append('</div>')
-        st.markdown(''.join(alert_html), unsafe_allow_html=True)
+        alert_html += '</div>'
+        st.markdown(alert_html, unsafe_allow_html=True)
 
     # ------------------------------------------
     # テーブル表示（HTMLテーブルで高品質レンダリング）
