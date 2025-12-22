@@ -114,17 +114,16 @@ st.markdown("""
     /* サイドバーヘッダー */
     .sidebar-header {
         font-family: 'Outfit', 'Noto Sans JP', sans-serif;
-        font-size: 0.75rem;
-        font-weight: 600;
+        font-size: 0.8rem;
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: var(--neutral-600);
-        padding: 0.75rem 0;
-        border-bottom: 2px solid var(--primary);
+        letter-spacing: 0.08em;
+        color: #a5b4fc;
+        padding: 0.75rem 0.5rem;
         margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+        background: linear-gradient(90deg, rgba(99, 102, 241, 0.2), transparent);
+        border-left: 3px solid #6366f1;
+        border-radius: 0 8px 8px 0;
     }
     
     /* ボタンスタイル */
@@ -186,47 +185,49 @@ st.markdown("""
         font-family: 'Noto Sans JP', sans-serif;
         font-weight: 500;
         font-size: 0.95rem;
-        background: white;
+        background: #334155 !important;
         border-radius: 12px !important;
-        border: 1px solid var(--neutral-200);
+        border: 1px solid #475569 !important;
         padding: 0.75rem 1rem !important;
         transition: all 0.2s ease;
+        color: #e2e8f0 !important;
     }
     
     .streamlit-expanderHeader:hover {
-        background: var(--neutral-50);
-        border-color: var(--primary-light);
+        background: #3f4f63 !important;
+        border-color: #6366f1 !important;
     }
     
     details[open] > .streamlit-expanderHeader {
         border-bottom-left-radius: 0 !important;
         border-bottom-right-radius: 0 !important;
-        border-bottom: none;
+        border-bottom: none !important;
+        background: #3730a3 !important;
     }
     
     .streamlit-expanderContent {
-        background: white;
-        border: 1px solid var(--neutral-200);
-        border-top: none;
-        border-radius: 0 0 12px 12px;
+        background: #1e293b !important;
+        border: 1px solid #475569 !important;
+        border-top: none !important;
+        border-radius: 0 0 12px 12px !important;
         padding: 1rem !important;
     }
     
     /* アラートボックス */
     .alert-container {
-        background: white;
+        background: #1e293b;
         border-radius: 16px;
         padding: 1.25rem;
         margin-bottom: 1.5rem;
-        box-shadow: var(--shadow-md);
-        border-left: 4px solid var(--warning);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        border-left: 4px solid #f59e0b;
     }
     
     .alert-title {
         font-family: 'Outfit', 'Noto Sans JP', sans-serif;
         font-weight: 600;
         font-size: 1rem;
-        color: var(--neutral-800);
+        color: #f1f5f9;
         margin-bottom: 0.75rem;
         display: flex;
         align-items: center;
@@ -236,8 +237,8 @@ st.markdown("""
     .alert-item {
         padding: 0.5rem 0;
         font-size: 0.9rem;
-        color: var(--neutral-700);
-        border-bottom: 1px solid var(--neutral-100);
+        color: #cbd5e1;
+        border-bottom: 1px solid #334155;
     }
     
     .alert-item:last-child {
@@ -274,24 +275,24 @@ st.markdown("""
     /* セクション区切り */
     .section-divider {
         height: 1px;
-        background: linear-gradient(90deg, transparent, var(--neutral-200), transparent);
+        background: linear-gradient(90deg, transparent, #475569, transparent);
         margin: 1.5rem 0;
     }
     
     /* カード */
     .info-card {
-        background: white;
+        background: #1e293b;
         border-radius: 14px;
         padding: 1.25rem;
         box-shadow: var(--shadow-md);
-        border: 1px solid var(--neutral-100);
+        border: 1px solid #334155;
         margin-bottom: 1rem;
     }
     
     .info-card-header {
         font-size: 0.85rem;
         font-weight: 600;
-        color: var(--neutral-600);
+        color: #94a3b8;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         margin-bottom: 0.5rem;
@@ -300,15 +301,15 @@ st.markdown("""
     .info-card-value {
         font-size: 1.75rem;
         font-weight: 700;
-        color: var(--neutral-900);
+        color: #f1f5f9;
     }
     
     /* フォーム */
     .stForm {
-        background: var(--neutral-50);
+        background: rgba(51, 65, 85, 0.5);
         border-radius: 14px;
         padding: 1rem;
-        border: 1px solid var(--neutral-200);
+        border: 1px solid #475569;
     }
     
     /* ダウンロードボタン */
@@ -369,45 +370,17 @@ st.markdown("""
     }
     
     ::-webkit-scrollbar-track {
-        background: var(--neutral-100);
+        background: #1e293b;
         border-radius: 4px;
     }
     
     ::-webkit-scrollbar-thumb {
-        background: var(--neutral-300);
+        background: #475569;
         border-radius: 4px;
     }
     
     ::-webkit-scrollbar-thumb:hover {
-        background: var(--neutral-400);
-    }
-    
-    /* ダークモード対応 */
-    @media (prefers-color-scheme: dark) {
-        .stApp {
-            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-        }
-        
-        section[data-testid="stSidebar"] {
-            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-            border-right: 1px solid #334155;
-        }
-        
-        .streamlit-expanderHeader,
-        .streamlit-expanderContent,
-        .alert-container,
-        .dataframe-container,
-        .info-card {
-            background: #1e293b;
-            border-color: #334155;
-        }
-        
-        .stTextInput > div > div > input,
-        .stNumberInput > div > div > input {
-            background: #1e293b !important;
-            color: #f1f5f9 !important;
-            border-color: #334155 !important;
-        }
+        background: #64748b;
     }
     
     /* アニメーション */
@@ -418,6 +391,17 @@ st.markdown("""
     
     .animate-in {
         animation: fadeIn 0.4s ease-out forwards;
+    }
+    
+    /* Streamlit固有の上書き */
+    .stAlert {
+        background: #1e293b !important;
+        border: 1px solid #475569 !important;
+        border-radius: 12px !important;
+    }
+    
+    div[data-testid="stExpander"] details {
+        border: none !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -956,64 +940,225 @@ if st.session_state.get('shift_success', False):
                     st.markdown(f"ℹ️ {msg}")
 
     # ------------------------------------------
-    # テーブル表示
+    # テーブル表示（HTMLテーブルで高品質レンダリング）
     # ------------------------------------------
-    st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
-    
-    df_display = df_raw.copy()
-    df_display['夜勤'] = [list(map(str.strip, r)).count('夜') for r in df_raw.values]
-    df_display['公休'] = [list(map(str.strip, r)).count('◎') for r in df_raw.values]
-    
-    total_row = pd.Series(day_shift_counts, name="日勤計")
-    total_row['夜勤'] = ''
-    total_row['公休'] = ''
-    df_display = pd.concat([df_display, total_row.to_frame().T])
-
     _, current_days = calendar.monthrange(current_year, current_month)
-    cols = []
     weekdays_ja = ["月", "火", "水", "木", "金", "土", "日"]
+    
+    def get_shift_style(val_str):
+        val = val_str.strip() if val_str else ""
+        if val == '◎' or val_str == '◎ ':
+            if val_str == '◎ ':  # 希望休
+                return 'background: linear-gradient(135deg, #059669, #10b981); color: white; font-weight: 700;'
+            return 'background: #10b981; color: white;'
+        elif val == '有':
+            return 'background: linear-gradient(135deg, #ec4899, #f472b6); color: white; font-weight: 600;'
+        elif val == 'リ休':
+            return 'background: linear-gradient(135deg, #f97316, #fb923c); color: white; font-weight: 600;'
+        elif val == '夜':
+            return 'background: linear-gradient(135deg, #3730a3, #6366f1); color: white; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,0.3);'
+        elif val == '・':
+            return 'background: #818cf8; color: white; font-weight: 600;'
+        elif val == '早':
+            return 'background: linear-gradient(135deg, #eab308, #facc15); color: #1a1a1a; font-weight: 700;'
+        elif val == '遅':
+            return 'background: linear-gradient(135deg, #ea580c, #f97316); color: white; font-weight: 700;'
+        elif val == '日':
+            return 'background: #f8fafc; color: #1e293b; font-weight: 600;'
+        return 'background: #334155; color: #94a3b8;'
+    
+    # HTMLテーブル構築
+    html_parts = ['''
+    <style>
+    .shift-table-container {
+        background: #1e293b;
+        border-radius: 16px;
+        padding: 1.5rem;
+        overflow-x: auto;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    .shift-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 3px;
+        font-family: 'Noto Sans JP', sans-serif;
+    }
+    .shift-table th {
+        background: #334155;
+        color: #e2e8f0;
+        padding: 10px 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-align: center;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+    .shift-table th.name-header {
+        background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        color: white;
+        min-width: 80px;
+        position: sticky;
+        left: 0;
+        z-index: 10;
+    }
+    .shift-table th.weekend {
+        background: #475569;
+        color: #fbbf24;
+    }
+    .shift-table th.sunday {
+        background: #7f1d1d;
+        color: #fca5a5;
+    }
+    .shift-table td {
+        padding: 8px 4px;
+        text-align: center;
+        font-size: 0.85rem;
+        border-radius: 6px;
+        min-width: 38px;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .shift-table td:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 5;
+        position: relative;
+    }
+    .shift-table td.name-cell {
+        background: #1e293b;
+        color: #f1f5f9;
+        font-weight: 600;
+        text-align: left;
+        padding-left: 12px;
+        position: sticky;
+        left: 0;
+        z-index: 5;
+        min-width: 80px;
+        border-left: 3px solid #6366f1;
+    }
+    .shift-table td.summary-cell {
+        background: #475569;
+        color: #f1f5f9;
+        font-weight: 700;
+    }
+    .shift-table tr.total-row td {
+        background: #0f172a;
+        color: #94a3b8;
+        font-weight: 600;
+        border-top: 2px solid #475569;
+    }
+    .shift-table tr.total-row td.shortage {
+        background: #991b1b;
+        color: #fecaca;
+        font-weight: 700;
+    }
+    .shift-table tr.total-row td.name-cell {
+        background: #0f172a;
+        color: #94a3b8;
+        border-left: 3px solid #475569;
+    }
+    .legend-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #1e293b;
+        border-radius: 12px;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.8rem;
+        color: #cbd5e1;
+    }
+    .legend-badge {
+        width: 28px;
+        height: 22px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    </style>
+    <div class="shift-table-container">
+    <table class="shift-table">
+    <thead><tr>
+    <th class="name-header">スタッフ</th>
+    ''']
+    
+    # ヘッダー行（日付）
     for d in range(1, current_days + 1):
-        wd = weekdays_ja[datetime.date(current_year, current_month, d).weekday()]
-        cols.append(f"{d}({wd})")
-    df_display.columns = cols + ['夜勤', '公休']
-    
-    def color_shift(val):
-        val_str = str(val)
-        style = 'text-align: center; font-weight: 500; border-radius: 4px; '
+        date_obj = datetime.date(current_year, current_month, d)
+        wd_idx = date_obj.weekday()
+        wd = weekdays_ja[wd_idx]
         
-        if val_str == '◎ ': 
-            return style + 'background: linear-gradient(135deg, #059669, #10b981); color: white;'
-        elif val_str == '◎': 
-            return style + 'background: #d1fae5; color: #065f46;'
-        elif val_str == '有':
-            return style + 'background: linear-gradient(135deg, #db2777, #ec4899); color: white;'
-        elif val_str == 'リ休':
-            return style + 'background: linear-gradient(135deg, #ea580c, #f97316); color: white;'
-        elif val_str == '夜': 
-            return style + 'background: linear-gradient(135deg, #1e3a8a, #3730a3); color: white;'
-        elif val_str == '・': 
-            return style + 'background: #dbeafe; color: #1e40af;'
-        elif val_str == '早': 
-            return style + 'background: linear-gradient(135deg, #ca8a04, #eab308); color: #422006;'
-        elif val_str == '遅': 
-            return style + 'background: linear-gradient(135deg, #c2410c, #ea580c); color: white;'
-        elif val_str == '日': 
-            return style + 'background: #fafafa; color: #171717; border: 1px solid #e5e5e5;'
-        elif isinstance(val, (int, float)):
-            if val < 3: 
-                return style + 'background: #fecaca; color: #991b1b; font-weight: 700;'
-            else: 
-                return style + 'background: #f5f5f5; color: #525252;'
+        th_class = ""
+        if wd_idx == 6:  # 日曜
+            th_class = ' class="sunday"'
+        elif wd_idx == 5:  # 土曜
+            th_class = ' class="weekend"'
         
-        return style + 'background: white; color: #525252;'
-
-    st.dataframe(
-        df_display.style.map(color_shift),
-        use_container_width=True,
-        height=400
-    )
+        html_parts.append(f'<th{th_class}>{d}<br><span style="font-size:0.65rem">{wd}</span></th>')
     
-    st.markdown('</div>', unsafe_allow_html=True)
+    html_parts.append('<th>夜勤</th><th>公休</th></tr></thead><tbody>')
+    
+    # データ行
+    for name in df_raw.index:
+        html_parts.append('<tr>')
+        html_parts.append(f'<td class="name-cell">{name}</td>')
+        
+        night_count = 0
+        off_count = 0
+        
+        for d in range(current_days):
+            val = df_raw.loc[name].iloc[d]
+            val_str = str(val) if val else ""
+            val_clean = val_str.strip()
+            
+            if val_clean == '夜':
+                night_count += 1
+            if val_clean == '◎':
+                off_count += 1
+            
+            style = get_shift_style(val_str)
+            display_val = val_clean if val_clean else ""
+            html_parts.append(f'<td style="{style}">{display_val}</td>')
+        
+        # 集計列
+        html_parts.append(f'<td class="summary-cell">{night_count}</td>')
+        html_parts.append(f'<td class="summary-cell">{off_count}</td>')
+        html_parts.append('</tr>')
+    
+    # 合計行
+    html_parts.append('<tr class="total-row">')
+    html_parts.append('<td class="name-cell">日勤計</td>')
+    
+    for d in range(current_days):
+        cnt = day_shift_counts.get(d, 0)
+        td_class = ' class="shortage"' if cnt < 3 else ''
+        html_parts.append(f'<td{td_class}>{cnt}</td>')
+    
+    html_parts.append('<td></td><td></td></tr>')
+    html_parts.append('</tbody></table></div>')
+    
+    # 凡例
+    html_parts.append('''
+    <div class="legend-container">
+        <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #3730a3, #6366f1); color: white;">夜</div>夜勤</div>
+        <div class="legend-item"><div class="legend-badge" style="background: #818cf8; color: white;">・</div>明け</div>
+        <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #eab308, #facc15); color: #1a1a1a;">早</div>早番</div>
+        <div class="legend-item"><div class="legend-badge" style="background: #f8fafc; color: #1e293b;">日</div>日勤</div>
+        <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #ea580c, #f97316); color: white;">遅</div>遅番</div>
+        <div class="legend-item"><div class="legend-badge" style="background: #10b981; color: white;">◎</div>公休</div>
+        <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #ec4899, #f472b6); color: white;">有</div>有休</div>
+        <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #f97316, #fb923c); color: white;">リ</div>リフレッシュ休暇</div>
+    </div>
+    ''')
+    
+    st.markdown(''.join(html_parts), unsafe_allow_html=True)
     
     # ダウンロードボタン
     col1, col2, col3 = st.columns([1, 1, 2])
@@ -1032,16 +1177,17 @@ else:
     # 初期状態の表示
     st.markdown("""
     <div style="
-        background: white;
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
         border-radius: 20px;
         padding: 3rem;
         text-align: center;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
         margin-top: 2rem;
+        border: 1px solid #475569;
     ">
         <div style="font-size: 4rem; margin-bottom: 1rem;">📋</div>
-        <h2 style="color: #171717; font-weight: 600; margin-bottom: 0.5rem;">シフトを作成しましょう</h2>
-        <p style="color: #525252; font-size: 1rem;">
+        <h2 style="color: #f1f5f9; font-weight: 600; margin-bottom: 0.5rem;">シフトを作成しましょう</h2>
+        <p style="color: #94a3b8; font-size: 1rem;">
             サイドバーでスタッフと条件を設定し、<br>
             「シフトを作成」ボタンをクリックしてください
         </p>
@@ -1057,34 +1203,37 @@ else:
         margin-top: 2rem;
     ">
         <div style="
-            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%);
             border-radius: 16px;
             padding: 1.5rem;
             text-align: center;
+            box-shadow: 0 4px 20px rgba(55, 48, 163, 0.3);
         ">
             <div style="font-size: 2rem; margin-bottom: 0.5rem;">👥</div>
-            <h4 style="color: #1e40af; font-weight: 600; margin: 0;">Step 1</h4>
-            <p style="color: #3730a3; font-size: 0.9rem; margin: 0.5rem 0 0 0;">スタッフを登録</p>
+            <h4 style="color: #c7d2fe; font-weight: 600; margin: 0;">Step 1</h4>
+            <p style="color: #a5b4fc; font-size: 0.9rem; margin: 0.5rem 0 0 0;">スタッフを登録</p>
         </div>
         <div style="
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            background: linear-gradient(135deg, #854d0e 0%, #a16207 100%);
             border-radius: 16px;
             padding: 1.5rem;
             text-align: center;
+            box-shadow: 0 4px 20px rgba(161, 98, 7, 0.3);
         ">
             <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚙️</div>
-            <h4 style="color: #92400e; font-weight: 600; margin: 0;">Step 2</h4>
-            <p style="color: #a16207; font-size: 0.9rem; margin: 0.5rem 0 0 0;">条件を設定</p>
+            <h4 style="color: #fef3c7; font-weight: 600; margin: 0;">Step 2</h4>
+            <p style="color: #fde68a; font-size: 0.9rem; margin: 0.5rem 0 0 0;">条件を設定</p>
         </div>
         <div style="
-            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            background: linear-gradient(135deg, #065f46 0%, #047857 100%);
             border-radius: 16px;
             padding: 1.5rem;
             text-align: center;
+            box-shadow: 0 4px 20px rgba(4, 120, 87, 0.3);
         ">
             <div style="font-size: 2rem; margin-bottom: 0.5rem;">🚀</div>
-            <h4 style="color: #065f46; font-weight: 600; margin: 0;">Step 3</h4>
-            <p style="color: #047857; font-size: 0.9rem; margin: 0.5rem 0 0 0;">シフト作成</p>
+            <h4 style="color: #d1fae5; font-weight: 600; margin: 0;">Step 3</h4>
+            <p style="color: #a7f3d0; font-size: 0.9rem; margin: 0.5rem 0 0 0;">シフト作成</p>
         </div>
     </div>
     """, unsafe_allow_html=True)
