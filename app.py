@@ -6,10 +6,79 @@ import datetime
 import json
 import copy
 
+# ★追加：認証ライブラリ
+import streamlit_authenticator as stauth
+
 # ==========================================
 # 1. アプリの設定 & デザイン
 # ==========================================
 st.set_page_config(page_title="Shift Manager Pro v40", layout="wide", page_icon="🗓️")
+
+# ==========================================
+# 0. ログイン（ここが「st.set_page_config直後」です）
+# ==========================================
+# 初心者向け：まずは最小構成で動く形（ベタ書き）にしています。
+# 本番運用では st.secrets や config.yaml に移してください。
+
+AUTH_CONFIG = {
+    "credentials": {
+        "usernames": {
+            "admin": {
+                "email": "admin@example.com",
+                "first_name": "Admin",
+                "last_name": "User",
+                # ★必ず変更してください（最初は動作確認のため平文でもOK）
+                "password": "change-me",
+                "roles": ["admin"],
+            }
+        }
+    },
+    "cookie": {
+        "name": "shift_manager_pro",
+        # ★必ず変更：長くてランダムな文字列にしてください
+        "key": "PLEASE_REPLACE_WITH_RANDOM_LONG_SECRET",
+        "expiry_days": 30,
+    },
+}
+
+authenticator = stauth.Authenticate(
+    AUTH_CONFIG["credentials"],
+    AUTH_CONFIG["cookie"]["name"],
+    AUTH_CONFIG["cookie"]["key"],
+    AUTH_CONFIG["cookie"]["expiry_days"],
+)
+
+# ログインフォーム
+try:
+    authenticator.login(
+        location="main",
+        fields={
+            "Form name": "ログイン",
+            "Username": "ユーザー名",
+            "Password": "パスワード",
+            "Login": "ログイン",
+        },
+        key="login_widget",
+    )
+except Exception as e:
+    st.error(e)
+    st.stop()
+
+# 認証状態で分岐（未ログイン時はここで止める）
+if st.session_state.get("authentication_status") is True:
+    with st.sidebar:
+        authenticator.logout(location="sidebar", key="logout_btn")
+        st.caption(f"ログイン中：{st.session_state.get('name') or st.session_state.get('username')}")
+elif st.session_state.get("authentication_status") is False:
+    st.error("ユーザー名またはパスワードが違います。")
+    st.stop()
+else:
+    st.warning("ユーザー名とパスワードを入力してください。")
+    st.stop()
+
+# ==========================================
+# 以降：ログイン成功した人だけが見えるUI
+# ==========================================
 
 st.markdown("""
     <style>
@@ -274,10 +343,6 @@ def solve_shift(staff_data):
             # 【ルール3】 連勤制限（5連勤までOK、6連勤NG）
             streak = 0
             current_add = 1
-            # 夜勤は2日分の負荷としてカウントするか、単純日数か。
-            # v40仕様: 夜勤入り(1日)→明け(1日)なので、夜勤自体のカウントは1だが、
-            # シフト並びとしては [勤務, 勤務, 夜, ・, ◎] となる。
-            # ここでは単純に「勤務日が何日続くか」を見る。
             temp_d = day_idx - 1
             while temp_d >= 0:
                 if current_sched[name][temp_d] not in ["", "◎", "リ休", "有"]: 
@@ -319,7 +384,6 @@ def solve_shift(staff_data):
                 for d_idx in s["req_night"]:
                     d = d_idx - 1
                     if 0 <= d < DAYS and schedule[name][d] == "":
-                        # 重複チェックは簡易
                         schedule[name][d] = "夜"
                         night_counts[name] += 1
                         if d < DAYS - 1: schedule[name][d+1] = "・"
@@ -333,7 +397,6 @@ def solve_shift(staff_data):
                             schedule[name][d] = shifts
             
             # (4) パートの自動埋め（最優先）
-            # 希望休などで埋まっていない日は、属性に応じてすべて埋める
             if s["type"] == 1: # パート(日勤のみ)
                 for d in range(DAYS):
                     if schedule[name][d] == "": schedule[name][d] = "日"
@@ -346,24 +409,16 @@ def solve_shift(staff_data):
         # ---------------------------------------------------
         cands_night = [s for s in staff_data if s["type"] == 0 and s["night_target"] > 0]
         days_indices = list(range(DAYS))
-        # ランダム性を担保
         random.shuffle(days_indices)
         
         for d in days_indices:
-            # 既に誰かが夜勤ならスキップ
             if any(schedule[s["name"]][d] == "夜" for s in staff_data): continue
             
-            # 候補者をシャッフルしてトライ
             random.shuffle(cands_night)
             for s in cands_night:
                 name = s["name"]
-                # その日、翌日、翌々日が空いているか確認
-                # (既に希望休などが入っている場合はNG)
                 if schedule[name][d] == "":
-                    # 翌日チェック
                     if d < DAYS - 1 and schedule[name][d+1] != "": continue
-                    # 翌々日チェック (希望休ならOKだが、勤務が入ってたらNG)
-                    # ただし「夜→・→◎」を強制したいので、あえて空欄か◎であることを要求
                     if d + 2 < DAYS and schedule[name][d+2] not in ["", "◎", "有", "リ休"]: continue
 
                     if check_rules(name, d, schedule, "夜"):
@@ -384,7 +439,6 @@ def solve_shift(staff_data):
                 random.shuffle(regulars)
                 for s in regulars:
                     if schedule[s["name"]][d] == "":
-                         # 労働日数上限チェック
                         curr_work = sum([1 for x in schedule[s["name"]] if x in ["早","日","遅","夜","・"]])
                         if curr_work < work_limits[s["name"]]:
                             if check_rules(s["name"], d, schedule, "遅"):
@@ -408,7 +462,6 @@ def solve_shift(staff_data):
                 if schedule[s["name"]][d] == "":
                     curr_work = sum([1 for x in schedule[s["name"]] if x in ["早","日","遅","夜","・"]])
                     if curr_work < work_limits[s["name"]]:
-                        # 基本は日勤、たまにランダムで他シフトも？いや基本「日」でOK
                         fill = "日"
                         if check_rules(s["name"], d, schedule, fill):
                             schedule[s["name"]][d] = fill
@@ -416,7 +469,6 @@ def solve_shift(staff_data):
         # ---------------------------------------------------
         # Phase 4: 最終調整
         # ---------------------------------------------------
-        # 空白はすべて公休にする
         for s in staff_data:
             for d in range(DAYS):
                 if schedule[s["name"]][d] == "": schedule[s["name"]][d] = "◎"
@@ -439,26 +491,24 @@ def solve_shift(staff_data):
                 cnt = schedule[s["name"]].count("夜")
                 score -= abs(cnt - tgt) * 50
         
-        # 人員不足ペナルティ（是正はしないが、スコアを下げて良い解を探させる）
+        # 人員不足ペナルティ
         shortage_penalty = 0
         for d in range(DAYS):
-             day_cnt = sum([1 for s in staff_data if schedule[s["name"]][d] in ["早", "日", "遅"]])
-             if day_cnt < 3: shortage_penalty += 1
+            day_cnt = sum([1 for s in staff_data if schedule[s["name"]][d] in ["早", "日", "遅"]])
+            if day_cnt < 3: shortage_penalty += 1
         score -= shortage_penalty * 200
 
-        # 夜勤不在ペナルティ（是正しないが極力避ける）
+        # 夜勤不在ペナルティ
         night_missing = 0
         for d in range(DAYS):
             if not any(schedule[s["name"]][d] == "夜" for s in staff_data):
                 night_missing += 1
         score -= night_missing * 500
 
-        # 更新
         if score > best_score:
             best_score = score
             best_schedule = copy.deepcopy(schedule)
             
-        # 満点に近いなら早期終了
         if shortage_penalty == 0 and night_missing == 0 and score > -50:
             break
 
@@ -498,7 +548,6 @@ if st.session_state.get('shift_success', False):
     day_shift_counts = {}
     for d_idx, col in enumerate(df_raw.columns):
         col_values = df_raw[col].values
-        # 人員数
         day_cnt = sum([1 for x in col_values if x in ['早', '日', '遅']])
         day_shift_counts[col] = day_cnt
         
@@ -509,22 +558,19 @@ if st.session_state.get('shift_success', False):
         if day_cnt < 3:
             alerts.append(f"⚠️ {date_str}: 日勤帯が {day_cnt}名 しかいません")
         
-        # 夜勤不在
         if '夜' not in col_values:
-             alerts.append(f"🔴 {date_str}: 夜勤者がいません")
+            alerts.append(f"🔴 {date_str}: 夜勤者がいません")
 
     # 個人ごとのチェック
     for name in df_raw.index:
         s_info = next(s for s in staff_data_list if s["name"] == name)
         row = df_raw.loc[name]
         
-        # 公休数
         if s_info["type"] == 0:
             off_cnt = list(row).count("◎")
             if off_cnt != TARGET_OFF_DAYS:
                 alerts.append(f"⚠️ {name}: 公休が {off_cnt}日 (目標{TARGET_OFF_DAYS})")
         
-        # 夜勤回数
         if s_info["night_target"] > 0:
             n_cnt = list(row).count("夜")
             if n_cnt != s_info["night_target"]:
