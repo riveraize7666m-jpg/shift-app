@@ -8,7 +8,7 @@ import copy
 import streamlit_authenticator as stauth
 
 # ==========================================
-# 0. 認証の設定
+# 0. 認証の設定 (v53 安定版)
 # ==========================================
 # ユーザー名: admin / パスワード: abc123
 credentials = {
@@ -28,30 +28,35 @@ authenticator = stauth.Authenticate(
     30
 )
 
-# ログイン画面を表示（最新の書き方に合わせました）
-authenticator.login()
+# ログイン画面の表示
+# 戻り値を明示的に受け取ることで動作を安定させます
+try:
+    auth_result = authenticator.login('main')
+except:
+    # 古いバージョンの場合
+    auth_result = authenticator.login('Login', 'main')
 
-# ログイン状態の確認
-if st.session_state["authentication_status"]:
+# ログイン状態をセッションから直接取得
+status = st.session_state.get("authentication_status")
+
+if status:
     # ------------------------------------------
-    # ログイン成功時
+    # ログイン成功
     # ------------------------------------------
     with st.sidebar:
-        st.write(f"ようこそ {st.session_state['name']} さん")
+        st.write(f"ようこそ {st.session_state.get('name')} さん")
         authenticator.logout('ログアウト', 'sidebar')
         st.markdown("---")
 
-    st.title("🗓️ Shift Manager Pro v52")
-    st.caption("ログイン機能・動作安定版")
+    st.title("🗓️ Shift Manager Pro v53")
+    st.caption("ログイン機能・認証強化版")
 
-    # シフト表作成に必要な基本データ
     if "staff_list" not in st.session_state:
         st.session_state.staff_list = [
             {"name": "スタッフA", "type": 0},
             {"name": "スタッフB", "type": 0}
         ]
 
-    # スタッフ管理（サイドバー）
     with st.sidebar:
         st.header("👥 スタッフ管理")
         with st.form("add_staff", clear_on_submit=True):
@@ -67,39 +72,33 @@ if st.session_state["authentication_status"]:
 
         if st.session_state.staff_list:
             del_target = st.selectbox("削除選択", [s["name"] for s in st.session_state.staff_list])
-            if st.button("削除を実行"):
+            if st.button("削除実行"):
                 st.session_state.staff_list = [s for s in st.session_state.staff_list if s["name"] != del_target]
                 st.rerun()
         st.markdown("---")
 
-    # シフトの条件設定
     with st.sidebar:
         st.header("📅 シフト設定")
         y_val = st.number_input("年", 2025, 2030, 2026)
         m_val = st.number_input("月", 1, 12, 2)
-        _, days_in_month = calendar.monthrange(y_val, m_val)
         if st.button("シフト案を作成", type="primary"):
             st.session_state.created = True
 
-    # 結果の表示
     if st.session_state.get("created"):
         st.success("シフト案を表示します")
-        # 動作確認用の簡易データ
+        _, days_in_month = calendar.monthrange(y_val, m_val)
         dummy_data = {s["name"]: ["日"] * days_in_month for s in st.session_state.staff_list}
-        df = pd.DataFrame(dummy_data).T
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(pd.DataFrame(dummy_data).T, use_container_width=True)
 
-elif st.session_state["authentication_status"] is False:
-    st.error('名前、またはパスワードが違います。')
+elif status is False:
+    st.error('ユーザー名、またはパスワードが違います。')
     st.info("テスト用： admin / abc123")
 
-elif st.session_state["authentication_status"] is None:
-    st.warning('ログインをお願いします。')
+else:
+    st.warning('ログインをおねがいします。')
     st.info("テスト用： admin / abc123")
     
-    # 支払い案内
     st.markdown("---")
     st.subheader("💎 有料版の申し込み")
-    st.write("継続して利用するには、アカウントの登録が必要です。")
+    st.write("継続して利用するには、登録がひつようです。")
     st.link_button("PayPalで月額 1,000円を支払う", "https://www.paypal.com/jp/home")
-    st.caption("※お支払い後に、専用のログイン情報を送ります。")
