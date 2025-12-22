@@ -510,7 +510,7 @@ st.markdown("""
 st.markdown("""
 <div class="main-header">
     <h1>✦ Shift Manager Pro</h1>
-    <p>スマートなシフト自動作成ツール — 連勤ルール対応版</p>
+    <p>最適なシフトを、ワンクリックで。</p>
 </div>
 """, unsafe_allow_html=True)
 
