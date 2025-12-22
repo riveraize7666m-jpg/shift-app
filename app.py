@@ -442,36 +442,6 @@ st.markdown("""
         border: none !important;
     }
     
-    /* ファイルアップローダーの英語テキストを日本語に置換 */
-    [data-testid="stFileUploadDropzone"] span {
-        font-size: 0 !important;
-    }
-    
-    [data-testid="stFileUploadDropzone"] span::after {
-        content: "ここにファイルをドロップ";
-        font-size: 0.9rem !important;
-        color: #cbd5e1 !important;
-    }
-    
-    [data-testid="stFileUploadDropzone"] small {
-        font-size: 0 !important;
-    }
-    
-    [data-testid="stFileUploadDropzone"] small::after {
-        content: "上限 200MB • JSON形式";
-        font-size: 0.75rem !important;
-        color: #94a3b8 !important;
-    }
-    
-    [data-testid="stFileUploadDropzone"] button span {
-        font-size: 0 !important;
-    }
-    
-    [data-testid="stFileUploadDropzone"] button span::after {
-        content: "ファイルを選択";
-        font-size: 0.85rem !important;
-    }
-    
     /* ラベル */
     .stTextInput > label,
     .stNumberInput > label,
@@ -535,6 +505,46 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+# ファイルアップローダーの日本語化（JavaScript注入）
+import streamlit.components.v1 as components
+components.html("""
+<script>
+function translateFileUploader() {
+    const parent = window.parent.document;
+    
+    // ドロップゾーンのテキスト
+    const spans = parent.querySelectorAll('[data-testid="stFileUploadDropzone"] span');
+    spans.forEach(span => {
+        if (span.textContent.includes('Drag and drop')) {
+            span.textContent = 'ここにファイルをドロップ';
+        }
+    });
+    
+    // ファイルサイズ制限のテキスト
+    const smalls = parent.querySelectorAll('[data-testid="stFileUploadDropzone"] small');
+    smalls.forEach(small => {
+        if (small.textContent.includes('Limit')) {
+            small.textContent = '上限 200MB • JSON形式';
+        }
+    });
+    
+    // ボタンのテキスト
+    const buttons = parent.querySelectorAll('[data-testid="stFileUploadDropzone"] button');
+    buttons.forEach(btn => {
+        if (btn.textContent.includes('Browse')) {
+            btn.textContent = 'ファイルを選択';
+        }
+    });
+}
+
+// 初回実行と定期実行（DOMが読み込まれるまで待機）
+setTimeout(translateFileUploader, 100);
+setTimeout(translateFileUploader, 500);
+setTimeout(translateFileUploader, 1000);
+setInterval(translateFileUploader, 1500);
+</script>
+""", height=0)
 
 # ヘッダー
 st.markdown("""
