@@ -25,14 +25,13 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🗓️ Shift Manager Pro v37")
-st.caption("クラウド対応版：スタッフ管理＆シフト作成")
+st.title("🗓️ Shift Manager Pro v38")
+st.caption("クラウド対応：パート自動出勤版")
 
 # ==========================================
 # 2. スタッフ管理機能
 # ==========================================
 if "staff_list" not in st.session_state:
-    # 初期データ
     st.session_state.staff_list = [
         {"name": "スタッフA", "type": 0},
         {"name": "スタッフB", "type": 0}
@@ -41,7 +40,6 @@ if "staff_list" not in st.session_state:
 with st.sidebar:
     st.header("👥 スタッフ管理")
     
-    # スタッフ追加フォーム
     with st.form("add_staff_form", clear_on_submit=True):
         new_name = st.text_input("名前を入力")
         new_type = st.selectbox("属性", ["常勤", "パート(日勤のみ)", "パート(早番のみ)", "夜勤専従"], index=0)
@@ -57,7 +55,6 @@ with st.sidebar:
             st.success(f"{new_name}さんを追加しました")
             st.rerun()
 
-    # スタッフ削除
     if st.session_state.staff_list:
         del_name = st.selectbox("削除するスタッフ", [s["name"] for s in st.session_state.staff_list], key="del_select")
         if st.button("削除実行"):
@@ -189,7 +186,7 @@ for idx, staff in enumerate(st.session_state.staff_list):
 
         # 夜勤回数
         night_target_val = 0
-        if stype in [1, 2]: st.info("夜勤なし")
+        if stype in [1, 2]: st.info("パートは基本出勤になります")
         else:
             default_val = 4
             key_night = f"night_{name}"
@@ -219,7 +216,7 @@ for idx, staff in enumerate(st.session_state.staff_list):
         "fixed_shifts": [f1, f2, f3]
     })
 
-# 保存ボタン用データ生成
+# 保存ボタン
 st.sidebar.markdown("---")
 export_data = {
     'input_year': st.session_state.get('input_year'),
@@ -256,24 +253,15 @@ def solve_shift(staff_data):
     best_score = -99999
     max_attempts = 1000 
 
-    target_work_days_map = {}
-    for s in staff_data:
-        if s["type"] in [1, 2]: 
-            target_work_days_map[s["name"]] = 99
-        else:
-            extra_off = len(s["refresh_days"]) + len(s["paid_leave_days"])
-            target_work_days_map[s["name"]] = DAYS - (TARGET_OFF_DAYS + extra_off)
-
     for attempt in range(max_attempts):
         schedule = {s["name"]: [""] * DAYS for s in staff_data}
         night_counts = {s["name"]: 0 for s in staff_data}
         
-        # 難易度調整パラメータ
+        # 難易度調整
         interval_factor = 0.6
         night_intervals = {}
         for s in staff_data:
             if s["night_target"][1] > 0:
-                # 複雑な式を分割してエラー回避
                 val = s["night_target"][1]
                 calc = (DAYS / val) * interval_factor
                 night_intervals[s["name"]] = int(calc)
@@ -338,6 +326,22 @@ def solve_shift(staff_data):
                                 if d < DAYS - 1: schedule[name][d+1] = "・"
                                 if d + 2 < DAYS and schedule[name][d+2] == "": schedule[name][d+2] = "◎"
 
+        # --- Phase 1.5: パート職員の自動埋め ---
+        # 希望休が入っていない空白部分は、属性に応じて自動で出勤にする
+        for s in staff_data:
+            nm = s["name"]
+            stype = s["type"]
+            # Type 1: パート(日勤のみ) -> 空白はすべて「日」
+            if stype == 1:
+                for d in range(DAYS):
+                    if schedule[nm][d] == "":
+                        schedule[nm][d] = "日"
+            # Type 2: パート(早番のみ) -> 空白はすべて「早」
+            elif stype == 2:
+                for d in range(DAYS):
+                    if schedule[nm][d] == "":
+                        schedule[nm][d] = "早"
+
         # --- Phase 2: 夜勤 ---
         cands_night = [s for s in staff_data if s["night_target"][1] > 0]
         days_indices = list(range(DAYS))
@@ -358,7 +362,8 @@ def solve_shift(staff_data):
                     night_counts[name] += 1
                     break
 
-        # --- Phase 3: 日勤帯 ---
+        # --- Phase 3: 日勤帯 (常勤・夜勤専従の空き枠) ---
+        # パートは既に埋まっているので、ここは常勤(0)と夜勤専従(3)の調整
         regulars = [s for s in staff_data if s["type"] in [0, 3]]
         for d in range(DAYS):
             current_staff = sum([1 for s in staff_data if schedule[s["name"]][d] in ["早", "日", "遅"]])
@@ -382,6 +387,7 @@ def solve_shift(staff_data):
         # スコアリング
         score = 0
         for s in staff_data:
+            # 常勤だけ公休数をチェック
             if s["type"] not in [1, 2]:
                 cnt = schedule[s["name"]].count("◎")
                 score -= abs(cnt - TARGET_OFF_DAYS) * 50
