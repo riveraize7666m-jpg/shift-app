@@ -545,14 +545,85 @@ def load_settings_callback():
             st.session_state.load_error = f"エラー: {e}"
 
 # ==========================================
-# 4. サイドバー構成
+# 4. 使い方ダイアログ
+# ==========================================
+@st.dialog("📖 使い方ガイド", width="large")
+def show_help_dialog():
+    st.markdown("""
+    ### 🚀 シフト作成の流れ
+    
+    **Step 1. 設定ファイルの読み込み（任意）**
+    > 以前保存した設定ファイル(.json)がある場合、ドロップして復元できます。
+    
+    **Step 2. シフト設定**
+    > 対象の年月と、常勤スタッフの公休日数を設定します。
+    
+    **Step 3. 個人設定**
+    > 各スタッフの希望シフト・希望休・夜勤目標などを設定します。
+    
+    **Step 4. シフト作成**
+    > 「シフトを作成」ボタンをクリックすると、AIが自動でシフトを作成します。
+    
+    ---
+    
+    ### 📋 シフト記号の意味
+    
+    | 記号 | 意味 | 説明 |
+    |:---:|:---:|:---|
+    | 早 | 早番 | 早番勤務 |
+    | 日 | 日勤 | 日勤勤務 |
+    | 遅 | 遅番 | 遅番勤務 |
+    | 夜 | 夜勤 | 夜勤勤務 |
+    | ・ | 明け | 夜勤明け（休み扱い） |
+    | ◎ | 公休 | 通常の公休日 |
+    | 有 | 有休 | 有給休暇 |
+    | リ休 | リフレッシュ | リフレッシュ休暇 |
+    
+    ---
+    
+    ### 👤 スタッフ属性について
+    
+    | 属性 | アイコン | 説明 |
+    |:---:|:---:|:---|
+    | 常勤 | 🔵 | 全シフト対応可能 |
+    | パート(日勤) | 🟢 | 日勤のみ対応 |
+    | パート(早番) | 🟡 | 早番のみ対応 |
+    
+    ---
+    
+    ### ⚠️ 確認ポイントについて
+    
+    シフト作成後、以下の問題がある場合はアラートが表示されます：
+    
+    - 🔴 **夜勤者なし** - その日の夜勤担当がいません
+    - ⚠️ **日勤帯不足** - 日勤帯（早・日・遅）のスタッフが3名未満です
+    - ℹ️ **目標未達** - 公休数や夜勤回数が目標と異なります
+    
+    ---
+    
+    ### 💾 設定の保存
+    
+    サイドバー下部の「設定を保存」ボタンで、現在の設定をファイルに保存できます。
+    次回以降、このファイルを読み込むことで設定を復元できます。
+    """)
+    
+    if st.button("閉じる", use_container_width=True):
+        st.rerun()
+
+# ==========================================
+# 5. サイドバー構成
 # ==========================================
 with st.sidebar:
-    # --- シフト作成ボタン（一番上） ---
-    if st.button("🚀 シフトを作成", type="primary", use_container_width=True):
-        st.session_state.run_solver = True
-    else:
-        st.session_state.run_solver = False
+    # --- シフト作成ボタン & 使い方ボタン ---
+    col_btn1, col_btn2 = st.columns([2, 1])
+    with col_btn1:
+        if st.button("🚀 シフトを作成", type="primary", use_container_width=True):
+            st.session_state.run_solver = True
+        else:
+            st.session_state.run_solver = False
+    with col_btn2:
+        if st.button("❓", use_container_width=True, help="使い方を表示"):
+            show_help_dialog()
     
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
     
@@ -1340,6 +1411,12 @@ else:
         </p>
     </div>
     """, unsafe_allow_html=True)
+    
+    # 使い方ボタン
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col2:
+        if st.button("📖 使い方ガイドを見る", use_container_width=True):
+            show_help_dialog()
     
     # クイックガイド
     st.markdown("""
