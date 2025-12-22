@@ -151,10 +151,11 @@ st.markdown("""
         font-family: 'Noto Sans JP', sans-serif;
         font-weight: 600;
         font-size: 0.9rem;
-        padding: 0.75rem 1.5rem;
+        padding: 0.6rem 1rem;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         box-shadow: var(--shadow-md);
         color: #f1f5f9 !important;
+        height: 42px;
     }
     
     .stButton > button[kind="primary"] {
@@ -178,6 +179,11 @@ st.markdown("""
         background: #475569;
         border-color: #6366f1;
         color: #ffffff !important;
+    }
+    
+    /* サイドバー上部のボタン行を揃える */
+    section[data-testid="stSidebar"] .stButton {
+        margin-bottom: 0;
     }
     
     /* 入力フィールド */
@@ -562,22 +568,22 @@ def show_help_dialog():
     > 各スタッフの希望シフト・希望休・夜勤目標などを設定します。
     
     **Step 4. シフト作成**
-    > 「シフトを作成」ボタンをクリックすると、AIが自動でシフトを作成します。
+    > 「シフトを作成」ボタンをクリックすると、自動でシフトを作成します。
     
     ---
     
     ### 📋 シフト記号の意味
     
-    | 記号 | 意味 | 説明 |
-    |:---:|:---:|:---|
-    | 早 | 早番 | 早番勤務 |
-    | 日 | 日勤 | 日勤勤務 |
-    | 遅 | 遅番 | 遅番勤務 |
-    | 夜 | 夜勤 | 夜勤勤務 |
-    | ・ | 明け | 夜勤明け（休み扱い） |
-    | ◎ | 公休 | 通常の公休日 |
-    | 有 | 有休 | 有給休暇 |
-    | リ休 | リフレッシュ | リフレッシュ休暇 |
+    | 記号 | 説明 |
+    |:---:|:---|
+    | 早 | 早番 |
+    | 日 | 日勤 |
+    | 遅 | 遅番 |
+    | 夜 | 夜勤 |
+    | ・ | 夜勤明け |
+    | ◎ | 公休 |
+    | 有 | 有給休暇 |
+    | リ休 | リフレッシュ休暇 |
     
     ---
     
@@ -615,14 +621,14 @@ def show_help_dialog():
 # ==========================================
 with st.sidebar:
     # --- シフト作成ボタン & 使い方ボタン ---
-    col_btn1, col_btn2 = st.columns([2, 1])
+    col_btn1, col_btn2 = st.columns([3, 1])
     with col_btn1:
         if st.button("🚀 シフトを作成", type="primary", use_container_width=True):
             st.session_state.run_solver = True
         else:
             st.session_state.run_solver = False
     with col_btn2:
-        if st.button("❓", use_container_width=True, help="使い方を表示"):
+        if st.button("❓", use_container_width=True):
             show_help_dialog()
     
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
@@ -1402,21 +1408,28 @@ else:
         box-shadow: 0 10px 40px rgba(0,0,0,0.3);
         margin-top: 2rem;
         border: 1px solid #475569;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 280px;
     ">
         <div style="font-size: 4rem; margin-bottom: 1rem;">📋</div>
         <h2 style="color: #f1f5f9; font-weight: 600; margin-bottom: 0.5rem;">シフトを作成しましょう</h2>
-        <p style="color: #94a3b8; font-size: 1rem;">
+        <p style="color: #94a3b8; font-size: 1rem; margin-bottom: 0;">
             サイドバーでスタッフと条件を設定し、<br>
             「シフトを作成」ボタンをクリックしてください
         </p>
     </div>
     """, unsafe_allow_html=True)
     
-    # 使い方ボタン
+    # 使い方ボタン（中央配置）
+    st.markdown('<div style="display: flex; justify-content: center; margin: 2rem 0;">', unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
         if st.button("📖 使い方ガイドを見る", use_container_width=True):
             show_help_dialog()
+    st.markdown('</div>', unsafe_allow_html=True)
     
     # クイックガイド
     st.markdown("""
