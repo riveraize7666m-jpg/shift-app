@@ -10,7 +10,7 @@ import re
 # ==========================================
 # 1. アプリの設定 & デザイン
 # ==========================================
-st.set_page_config(page_title="Shift Manager Pro v43", layout="wide", page_icon="🗓️")
+st.set_page_config(page_title="Shift Manager Pro v44", layout="wide", page_icon="🗓️")
 
 st.markdown("""
     <style>
@@ -30,8 +30,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🗓️ Shift Manager Pro v43")
-st.caption("クラウド対応：希望休前の夜勤優先配置ロジック搭載版")
+st.title("🗓️ Shift Manager Pro v44")
+st.caption("クラウド対応：最終調整（人数平準化）ロジック強化版")
 
 # ==========================================
 # 2. スタッフ管理機能
@@ -238,8 +238,6 @@ def solve_shift(staff_data):
         schedule = {s["name"]: [""] * DAYS for s in staff_data}
         night_counts = {s["name"]: 0 for s in staff_data}
         
-        interval_factor = 0.6
-        
         def check_rules(name, day_idx, current_sched, shift_type):
             staff_info = next(s for s in staff_data if s["name"] == name)
             
@@ -269,13 +267,9 @@ def solve_shift(staff_data):
             
             return True
 
-        # ---------------------------------------------------
         # Phase 1: ベース作成
-        # ---------------------------------------------------
         for s in staff_data:
             name = s["name"]
-            
-            # (1) 年始固定
             for i in range(3):
                 if s["fixed_shifts"][i] != "":
                     schedule[name][i] = s["fixed_shifts"][i]
@@ -283,16 +277,12 @@ def solve_shift(staff_data):
                         night_counts[name] += 1
                         if i + 1 < DAYS: schedule[name][i+1] = "・"
                         if i + 2 < DAYS: schedule[name][i+2] = "◎" 
-
-            # (2) 休み希望
             for d in s["req_off"]: 
                 if schedule[name][d-1] == "": schedule[name][d-1] = "◎ " 
             for d in s["refresh_days"]:
                 if schedule[name][d-1] == "": schedule[name][d-1] = "リ休"
             for d in s["paid_leave_days"]:
                 if schedule[name][d-1] == "": schedule[name][d-1] = "有"
-            
-            # (3) 勤務希望
             if "req_night" in s:
                 for d_idx in s["req_night"]:
                     d = d_idx - 1
@@ -301,15 +291,12 @@ def solve_shift(staff_data):
                         night_counts[name] += 1
                         if d < DAYS - 1: schedule[name][d+1] = "・"
                         if d + 2 < DAYS and schedule[name][d+2] == "": schedule[name][d+2] = "◎"
-            
             for shifts, req_list in [("早", "req_early"), ("遅", "req_late"), ("日", "req_day")]:
                 if req_list in s:
                     for d_idx in s[req_list]:
                         d = d_idx - 1
                         if 0 <= d < DAYS and schedule[name][d] == "":
                             schedule[name][d] = shifts
-            
-            # (4) パート自動埋め
             if s["type"] == 1: 
                 for d in range(DAYS):
                     if schedule[name][d] == "": schedule[name][d] = "日"
@@ -317,53 +304,32 @@ def solve_shift(staff_data):
                 for d in range(DAYS):
                     if schedule[name][d] == "": schedule[name][d] = "早"
 
-        # ---------------------------------------------------
-        # Phase 1.5: 希望休前の夜勤優先配置 (★追加)
-        # ---------------------------------------------------
+        # Phase 1.5: 希望休前の夜勤優先配置
         for d in range(DAYS - 2):
-            # 既に夜勤がいるか確認
-            if any(schedule[s["name"]][d] == "夜" for s in staff_data):
-                continue
-            
-            # 2日後(d+2)に希望休がある常勤スタッフを探す
+            if any(schedule[s["name"]][d] == "夜" for s in staff_data): continue
             candidates = []
             for s in staff_data:
                 if s["type"] != 0: continue
                 name = s["name"]
-                
-                # 2日後のシフトを見る
                 val_next2 = schedule[name][d+2].strip()
-                
-                # 希望休系なら候補
                 if val_next2 in ["◎", "有", "リ休"]:
-                    # d, d+1が空いていてルールOKなら
                     if schedule[name][d] == "" and schedule[name][d+1] == "":
                          if check_rules(name, d, schedule, "夜"):
                             candidates.append(s)
-            
             if candidates:
-                # 夜勤目標が多い人を優先、同点ならランダム
                 random.shuffle(candidates)
                 candidates.sort(key=lambda x: x["night_target"], reverse=True)
-                
-                winner = candidates[0]
-                w_name = winner["name"]
-                
+                w_name = candidates[0]["name"]
                 schedule[w_name][d] = "夜"
                 schedule[w_name][d+1] = "・"
                 night_counts[w_name] += 1
-                # 選ばれなかった人は何もしない(条件無視)
 
-        # ---------------------------------------------------
-        # Phase 2: 残りの夜勤割り当て
-        # ---------------------------------------------------
+        # Phase 2: 残りの夜勤
         cands_night = [s for s in staff_data if s["type"] == 0 and s["night_target"] > 0]
         days_indices = list(range(DAYS))
         random.shuffle(days_indices)
-        
         for d in days_indices:
             if any(schedule[s["name"]][d] == "夜" for s in staff_data): continue
-            
             random.shuffle(cands_night)
             for s in cands_night:
                 name = s["name"]
@@ -372,7 +338,6 @@ def solve_shift(staff_data):
                     if d + 2 < DAYS:
                         val_next2 = schedule[name][d+2].strip()
                         if val_next2 != "" and val_next2 not in ["◎", "有", "リ休"]: continue
-
                     if check_rules(name, d, schedule, "夜"):
                         schedule[name][d] = "夜"
                         night_counts[name] += 1
@@ -380,11 +345,10 @@ def solve_shift(staff_data):
                         if d + 2 < DAYS and schedule[name][d+2] == "": schedule[name][d+2] = "◎"
                         break
 
-        # ---------------------------------------------------
-        # Phase 3: 日勤埋め合わせ
-        # ---------------------------------------------------
+        # Phase 3: 日勤埋め (まずは埋める)
         regulars = [s for s in staff_data if s["type"] == 0]
         
+        # 3.1: 必須シフト(早/遅)の穴埋め
         for d in range(DAYS):
             if not any(schedule[s["name"]][d] == "遅" for s in staff_data):
                 random.shuffle(regulars)
@@ -395,7 +359,6 @@ def solve_shift(staff_data):
                             if check_rules(s["name"], d, schedule, "遅"):
                                 schedule[s["name"]][d] = "遅"
                                 break
-            
             if not any(schedule[s["name"]][d] == "早" for s in staff_data):
                 random.shuffle(regulars)
                 for s in regulars:
@@ -406,31 +369,98 @@ def solve_shift(staff_data):
                                 schedule[s["name"]][d] = "早"
                                 break
 
-            random.shuffle(regulars)
-            for s in regulars:
-                if schedule[s["name"]][d] == "":
-                    curr_work = sum([1 for x in schedule[s["name"]] if x.strip() in ["早","日","遅","夜","・"]])
-                    if curr_work < work_limits[s["name"]]:
-                        if check_rules(s["name"], d, schedule, "日"):
-                            schedule[s["name"]][d] = "日"
+        # 3.2: 日勤で労働日数限界まで埋める
+        for s in regulars:
+            empty_days = [d for d in range(DAYS) if schedule[s["name"]][d] == ""]
+            random.shuffle(empty_days)
+            for d in empty_days:
+                curr_work = sum([1 for x in schedule[s["name"]] if x.strip() in ["早","日","遅","夜","・"]])
+                if curr_work >= work_limits[s["name"]]: break
+                
+                # とりあえず埋める
+                if check_rules(s["name"], d, schedule, "日"):
+                    schedule[s["name"]][d] = "日"
 
-        # ---------------------------------------------------
-        # Phase 4: 最終調整
-        # ---------------------------------------------------
+        # 残りは公休
         for s in staff_data:
             for d in range(DAYS):
                 if schedule[s["name"]][d] == "": schedule[s["name"]][d] = "◎"
 
-        # ---------------------------------------------------
+        # Phase 4: 最終調整 (スワップロジック)
+        # 人員不足の日(target)と、人員余剰の日(source)を見つけて、
+        # sourceで働いていてtargetで休んでいる人を入れ替える
+        for _ in range(5): # 5回繰り返して収束させる
+            # 日ごとの人数カウント
+            day_counts = {}
+            for d in range(DAYS):
+                day_counts[d] = sum([1 for s in staff_data if schedule[s["name"]][d].strip() in ["早","日","遅"]])
+            
+            shortage_days = [d for d, c in day_counts.items() if c < 3]
+            surplus_days = [d for d, c in day_counts.items() if c > 3]
+            
+            if not shortage_days: break # 不足なしなら終了
+            
+            random.shuffle(shortage_days)
+            random.shuffle(surplus_days)
+            
+            swapped_any = False
+            for short_d in shortage_days:
+                for surp_d in surplus_days:
+                    # スワップ候補者を探す: Surplus日で働き、Short日で休んでいる常勤
+                    candidates = []
+                    for s in regulars:
+                        if schedule[s["name"]][surp_d].strip() in ["早","日","遅"] and \
+                           schedule[s["name"]][short_d].strip() == "◎":
+                           candidates.append(s)
+                    
+                    random.shuffle(candidates)
+                    for cand in candidates:
+                        name = cand["name"]
+                        shift_to_move = schedule[name][surp_d] # 移動させるシフト(日/早/遅)
+                        
+                        # 仮に入れ替えたとしてルールチェック
+                        # 1. Short日にShiftを入れる
+                        # 2. Surplus日を◎にする
+                        
+                        # まずShort日のチェック
+                        # (Surplus日を◎にするのは基本的にルール違反にならないのでShort日を重点チェック)
+                        
+                        # 一時的に書き換え
+                        original_short = schedule[name][short_d]
+                        original_surp = schedule[name][surp_d]
+                        
+                        schedule[name][short_d] = shift_to_move
+                        schedule[name][surp_d] = "◎"
+                        
+                        # ルール確認 (Short日周辺とSurplus日周辺)
+                        valid_short = check_rules(name, short_d, schedule, shift_to_move)
+                        # Surplus日が休みになることのチェックは連勤が切れるだけなのでほぼOKだが
+                        # 前日が夜勤明けでないか等は確認必要
+                        valid_surp = True
+                        if surp_d > 0 and schedule[name][surp_d-1].strip() == "・": valid_surp = False # 明けの翌日は休みOKだが念のため
+                        # 逆に、Surplus日を休みにしたことで「連勤不足」になるルールはない
+                        
+                        if valid_short and valid_surp:
+                            # 採用！
+                            day_counts[short_d] += 1
+                            day_counts[surp_d] -= 1
+                            swapped_any = True
+                            break # 次のShort日へ
+                        else:
+                            # 戻す
+                            schedule[name][short_d] = original_short
+                            schedule[name][surp_d] = original_surp
+                    
+                    if day_counts[short_d] >= 3: break # 解消したら次へ
+                
+            if not swapped_any: break
+
         # スコアリング
-        # ---------------------------------------------------
         score = 0
-        
         for s in staff_data:
             if s["type"] == 0:
                 cnt = sum([1 for x in schedule[s["name"]] if x.strip() == "◎"])
                 score -= abs(cnt - TARGET_OFF_DAYS) * 100
-        
         for s in staff_data:
             tgt = s["night_target"]
             if tgt > 0:
@@ -535,8 +565,8 @@ if st.session_state.get('shift_success', False):
     df_display = pd.concat([df_display, total_row.to_frame().T])
 
     _, current_days = calendar.monthrange(current_year, current_month)
-    weekdays_ja = ["月", "火", "水", "木", "金", "土", "日"]
     cols = []
+    weekdays_ja = ["月", "火", "水", "木", "金", "土", "日"]
     for d in range(1, current_days + 1):
         wd = weekdays_ja[datetime.date(current_year, current_month, d).weekday()]
         cols.append(f"{d}({wd})")
