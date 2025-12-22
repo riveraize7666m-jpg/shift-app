@@ -105,10 +105,13 @@ st.markdown("""
     section[data-testid="stSidebar"] {
         background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
         border-right: 1px solid #334155;
+        min-width: 320px !important;
+        width: 320px !important;
     }
     
     section[data-testid="stSidebar"] > div {
         padding-top: 1.5rem;
+        width: 320px !important;
     }
     
     section[data-testid="stSidebar"] * {
@@ -117,6 +120,12 @@ st.markdown("""
     
     section[data-testid="stSidebar"] .stMarkdown p {
         color: #e2e8f0 !important;
+    }
+    
+    /* サイドバー幅の強制 */
+    [data-testid="stSidebar"][aria-expanded="true"] {
+        min-width: 320px !important;
+        max-width: 320px !important;
     }
     
     /* サイドバーヘッダー */
@@ -433,6 +442,36 @@ st.markdown("""
         border: none !important;
     }
     
+    /* ファイルアップローダーの英語テキストを日本語に置換 */
+    [data-testid="stFileUploadDropzone"] span {
+        font-size: 0 !important;
+    }
+    
+    [data-testid="stFileUploadDropzone"] span::after {
+        content: "ここにファイルをドロップ";
+        font-size: 0.9rem !important;
+        color: #cbd5e1 !important;
+    }
+    
+    [data-testid="stFileUploadDropzone"] small {
+        font-size: 0 !important;
+    }
+    
+    [data-testid="stFileUploadDropzone"] small::after {
+        content: "上限 200MB • JSON形式";
+        font-size: 0.75rem !important;
+        color: #94a3b8 !important;
+    }
+    
+    [data-testid="stFileUploadDropzone"] button span {
+        font-size: 0 !important;
+    }
+    
+    [data-testid="stFileUploadDropzone"] button span::after {
+        content: "ファイルを選択";
+        font-size: 0.85rem !important;
+    }
+    
     /* ラベル */
     .stTextInput > label,
     .stNumberInput > label,
@@ -556,31 +595,6 @@ with st.sidebar:
     
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
     
-    # --- スタッフ管理 ---
-    st.markdown('<div class="sidebar-header">👥 スタッフ管理</div>', unsafe_allow_html=True)
-    
-    with st.form("add_staff_form", clear_on_submit=True):
-        new_name = st.text_input("名前", placeholder="新しいスタッフ名")
-        new_type = st.selectbox("属性", ["常勤", "パート(日勤のみ)", "パート(早番のみ)"], index=0)
-        submitted = st.form_submit_button("➕ スタッフを追加", type="primary")
-        
-        if submitted and new_name:
-            type_code = 0
-            if new_type == "パート(日勤のみ)": type_code = 1
-            elif new_type == "パート(早番のみ)": type_code = 2
-            
-            st.session_state.staff_list.append({"name": new_name, "type": type_code})
-            st.success(f"✓ {new_name}さんを追加しました")
-            st.rerun()
-
-    if st.session_state.staff_list:
-        del_name = st.selectbox("削除対象", [s["name"] for s in st.session_state.staff_list], key="del_select")
-        if st.button("🗑️ このスタッフを削除", use_container_width=True):
-            st.session_state.staff_list = [s for s in st.session_state.staff_list if s["name"] != del_name]
-            st.rerun()
-    
-    st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
-    
     # --- シフト設定 ---
     st.markdown('<div class="sidebar-header">📅 シフト設定</div>', unsafe_allow_html=True)
 
@@ -686,6 +700,32 @@ for idx, staff in enumerate(st.session_state.staff_list):
         "prev_shift": prev_shift, "prev_streak": prev_streak,
         "fixed_shifts": [f1, f2, f3]
     })
+
+# ==========================================
+# 6. スタッフ管理（個人設定の下）
+# ==========================================
+st.sidebar.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+st.sidebar.markdown('<div class="sidebar-header">👥 スタッフ管理</div>', unsafe_allow_html=True)
+
+with st.sidebar.form("add_staff_form", clear_on_submit=True):
+    new_name = st.text_input("名前", placeholder="新しいスタッフ名")
+    new_type = st.selectbox("属性", ["常勤", "パート(日勤のみ)", "パート(早番のみ)"], index=0)
+    submitted = st.form_submit_button("➕ スタッフを追加", type="primary")
+    
+    if submitted and new_name:
+        type_code = 0
+        if new_type == "パート(日勤のみ)": type_code = 1
+        elif new_type == "パート(早番のみ)": type_code = 2
+        
+        st.session_state.staff_list.append({"name": new_name, "type": type_code})
+        st.success(f"✓ {new_name}さんを追加しました")
+        st.rerun()
+
+if st.session_state.staff_list:
+    del_name = st.sidebar.selectbox("削除対象", [s["name"] for s in st.session_state.staff_list], key="del_select")
+    if st.sidebar.button("🗑️ このスタッフを削除", use_container_width=True):
+        st.session_state.staff_list = [s for s in st.session_state.staff_list if s["name"] != del_name]
+        st.rerun()
 
 # 保存ボタン
 st.sidebar.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
@@ -1266,7 +1306,7 @@ if st.session_state.get('shift_success', False):
         <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #3730a3, #6366f1); color: white;">夜</div>夜勤</div>
         <div class="legend-item"><div class="legend-badge" style="background: #818cf8; color: white;">・</div>明け</div>
         <div class="legend-item"><div class="legend-badge" style="background: #10b981; color: white;">◎</div>公休</div>
-        <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #0891b2, #22d3ee); color: #0c1a1a;">★</div>希望休</div>
+        <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #0891b2, #22d3ee); color: #0c1a1a;">◎</div>希望休</div>
         <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #ec4899, #f472b6); color: white;">有</div>有休</div>
         <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #f97316, #fb923c); color: white;">リ</div>リフレッシュ休暇</div>
     </div>
