@@ -696,6 +696,9 @@ if st.session_state.staff_list:
     del_name = st.sidebar.selectbox("削除対象", [s["name"] for s in st.session_state.staff_list], key="del_select")
     if st.sidebar.button("🗑️ このスタッフを削除", use_container_width=True):
         st.session_state.staff_list = [s for s in st.session_state.staff_list if s["name"] != del_name]
+        # シフト結果もリセット（スタッフ変更により無効になるため）
+        st.session_state.shift_result = None
+        st.session_state.shift_success = False
         st.rerun()
 
 # 保存ボタン
@@ -1023,7 +1026,9 @@ if st.session_state.get('shift_success', False):
              alerts.append(("error", f"{date_str}: 夜勤者なし"))
 
     for name in df_raw.index:
-        s_info = next(s for s in staff_data_list if s["name"] == name)
+        s_info = next((s for s in staff_data_list if s["name"] == name), None)
+        if s_info is None:
+            continue  # スタッフが見つからない場合はスキップ
         row = [x.strip() for x in df_raw.loc[name]]
         
         if s_info["type"] == 0:
