@@ -9,7 +9,7 @@ import copy
 # ==========================================
 # 1. アプリの設定 & デザイン
 # ==========================================
-st.set_page_config(page_title="Shift Manager Pro", layout="wide", page_icon="🗓️")
+st.set_page_config(page_title="Shift Manager Pro v40", layout="wide", page_icon="🗓️")
 
 st.markdown("""
     <style>
@@ -18,6 +18,10 @@ st.markdown("""
         width: 100%; border-radius: 12px; font-weight: bold;
         background-color: #FF4B4B; color: white; height: 3em;
     }
+    .alert-box {
+        padding: 1rem; background-color: #fef2f2; border: 1px solid #f87171; 
+        border-radius: 8px; color: #991b1b; margin-bottom: 1rem;
+    }
     section[data-testid="stSidebar"] { background-color: #f8f9fa; }
     @media (prefers-color-scheme: dark) {
         section[data-testid="stSidebar"] { background-color: #262730; }
@@ -25,8 +29,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🗓️ Shift Manager Pro v38")
-st.caption("クラウド対応：パート自動出勤版")
+st.title("🗓️ Shift Manager Pro v40")
+st.caption("クラウド対応：汎用ロジック＆アラート機能搭載版")
 
 # ==========================================
 # 2. スタッフ管理機能
@@ -42,14 +46,14 @@ with st.sidebar:
     
     with st.form("add_staff_form", clear_on_submit=True):
         new_name = st.text_input("名前を入力")
-        new_type = st.selectbox("属性", ["常勤", "パート(日勤のみ)", "パート(早番のみ)", "夜勤専従"], index=0)
+        # 属性から「夜勤専従」を削除し、3種類に整理
+        new_type = st.selectbox("属性", ["常勤", "パート(日勤のみ)", "パート(早番のみ)"], index=0)
         submitted = st.form_submit_button("＋ スタッフを追加")
         
         if submitted and new_name:
             type_code = 0
             if new_type == "パート(日勤のみ)": type_code = 1
             elif new_type == "パート(早番のみ)": type_code = 2
-            elif new_type == "夜勤専従": type_code = 3
             
             st.session_state.staff_list.append({"name": new_name, "type": type_code})
             st.success(f"{new_name}さんを追加しました")
@@ -82,18 +86,10 @@ def load_settings_callback():
 
 with st.sidebar:
     st.header("📂 設定の保存・復元")
-    
-    st.file_uploader(
-        "設定ファイル(.json)", 
-        type=["json"], 
-        key="setting_file_uploader", 
-        on_change=load_settings_callback
-    )
-
+    st.file_uploader("設定ファイル(.json)", type=["json"], key="setting_file_uploader", on_change=load_settings_callback)
     if st.session_state.get("load_success_flag", False):
         st.success("復元完了！")
         st.session_state.load_success_flag = False
-    
     st.markdown("---")
 
 # ==========================================
@@ -101,24 +97,17 @@ with st.sidebar:
 # ==========================================
 with st.sidebar:
     st.header("📅 シフト設定")
-    
-    if "input_year" not in st.session_state:
-        st.session_state.input_year = 2026
-    if "input_month" not in st.session_state:
-        st.session_state.input_month = 2
+    if "input_year" not in st.session_state: st.session_state.input_year = 2026
+    if "input_month" not in st.session_state: st.session_state.input_month = 2
 
     col_y, col_m = st.columns(2)
     with col_y: YEAR = st.number_input("年", 2025, 2030, key="input_year")
     with col_m: MONTH = st.number_input("月", 1, 12, key="input_month")
 
     _, DAYS = calendar.monthrange(YEAR, MONTH)
-    SUNDAYS = [d for d in range(1, DAYS + 1) if datetime.date(YEAR, MONTH, d).weekday() == 6]
-
-    st.markdown(f"<h3 style='text-align: center;'>{YEAR}年 {MONTH}月</h3>", unsafe_allow_html=True)
     
-    if "target_off" not in st.session_state:
-        st.session_state.target_off = 9
-    TARGET_OFF_DAYS = st.number_input("公休数 (目標)", 1, 15, key="target_off")
+    if "target_off" not in st.session_state: st.session_state.target_off = 9
+    TARGET_OFF_DAYS = st.number_input("常勤の公休数 (目標)", 1, 15, key="target_off")
     
     st.markdown("---")
     if st.button("シフトを作成する", type="primary"):
@@ -146,17 +135,15 @@ for idx, staff in enumerate(st.session_state.staff_list):
     
     with st.sidebar.expander(f"{name}", expanded=False):
         # 属性変更
-        type_labels = ["常勤", "パート(日勤のみ)", "パート(早番のみ)", "夜勤専従"]
+        type_labels = ["常勤", "パート(日勤のみ)", "パート(早番のみ)"]
         current_idx = 0
         if stype == 1: current_idx = 1
         elif stype == 2: current_idx = 2
-        elif stype == 3: current_idx = 3
         
         new_type_label = st.selectbox("属性変更", type_labels, index=current_idx, key=f"type_c_{name}_{idx}")
         new_code = 0
         if new_type_label == "パート(日勤のみ)": new_code = 1
         elif new_type_label == "パート(早番のみ)": new_code = 2
-        elif new_type_label == "夜勤専従": new_code = 3
         staff["type"] = new_code
         stype = new_code
 
@@ -166,13 +153,11 @@ for idx, staff in enumerate(st.session_state.staff_list):
         with c1: prev_shift = st.selectbox("前月末", SHIFT_OPTIONS, key=key_prev)
         
         with c2:
-            prev_streak = 0
-            if prev_shift not in ["◎", "有", "リ休"]:
-                key_streak = f"streak_{name}"
-                if key_streak not in st.session_state: st.session_state[key_streak] = 0
-                prev_streak = st.number_input("連勤", 0, 10, key=key_streak)
+            key_streak = f"streak_{name}"
+            if key_streak not in st.session_state: st.session_state[key_streak] = 0
+            prev_streak = st.number_input("連勤", 0, 10, key=key_streak)
         
-        # 固定シフト
+        # 固定シフト(年始)
         f1, f2, f3 = "", "", ""
         if st.checkbox("年始固定(1/1-3)", key=f"open_fix_{name}"):
             fix_opts = [""] + SHIFT_OPTIONS
@@ -184,16 +169,13 @@ for idx, staff in enumerate(st.session_state.staff_list):
             f2 = st.selectbox("2日", fix_opts, key=key_f2)
             f3 = st.selectbox("3日", fix_opts, key=key_f3)
 
-        # 夜勤回数
         night_target_val = 0
-        if stype in [1, 2]: st.info("パートは基本出勤になります")
+        if stype != 0: st.info("夜勤なし")
         else:
-            default_val = 4
             key_night = f"night_{name}"
-            if key_night not in st.session_state: st.session_state[key_night] = default_val
+            if key_night not in st.session_state: st.session_state[key_night] = 4
             night_target_val = st.number_input("夜勤目標", 0, 10, key=key_night)
 
-        # 希望シフト入力
         req_n_in = st.text_input("夜勤希望 (例:7,20)", key=f"req_n_{name}")
         req_e_in = st.text_input("早番希望", key=f"req_e_{name}")
         req_l_in = st.text_input("遅番希望", key=f"req_l_{name}")
@@ -203,9 +185,8 @@ for idx, staff in enumerate(st.session_state.staff_list):
         ref_in = st.text_input("リ休", key=f"ref_{name}")
         paid_in = st.text_input("有休", key=f"paid_{name}")
 
-    # データ整形
     staff_data_list.append({
-        "name": name, "type": stype, "night_target": [night_target_val, night_target_val],
+        "name": name, "type": stype, "night_target": night_target_val,
         "req_night": parse_days(req_n_in),
         "req_early": parse_days(req_e_in),
         "req_late": parse_days(req_l_in),
@@ -234,55 +215,69 @@ for s in st.session_state.staff_list:
     ]
     for k in keys:
         if k in st.session_state: export_data[k] = st.session_state[k]
-
-st.sidebar.download_button(
-    "💾 設定をファイルに保存", 
-    json.dumps(export_data, indent=2, ensure_ascii=False), 
-    'shift_settings.json', 
-    'application/json'
-)
+st.sidebar.download_button("💾 設定を保存", json.dumps(export_data, indent=2, ensure_ascii=False), 'shift_settings.json', 'application/json')
 
 # ==========================================
-# 6. 計算ロジック
+# 6. 計算ロジック (v40 汎用・厳格化版)
 # ==========================================
 def solve_shift(staff_data):
     progress_text = "AIがシフトを作成中..."
     my_bar = st.progress(0, text=progress_text)
 
     best_schedule = None
-    best_score = -99999
-    max_attempts = 1000 
+    best_score = -999999
+    max_attempts = 1500 
+
+    # 各スタッフの労働可能日数の計算
+    work_limits = {}
+    for s in staff_data:
+        if s["type"] != 0: 
+            work_limits[s["name"]] = 99 # パートは制限なし（希望休以外出る）
+        else:
+            # 常勤は [月の日数 - 公休 - 有休 - リ休] が出勤日数
+            extra_off = len(s["refresh_days"]) + len(s["paid_leave_days"])
+            work_limits[s["name"]] = DAYS - (TARGET_OFF_DAYS + extra_off)
 
     for attempt in range(max_attempts):
         schedule = {s["name"]: [""] * DAYS for s in staff_data}
         night_counts = {s["name"]: 0 for s in staff_data}
         
-        # 難易度調整
+        # インターバル制御用のランダム要素
         interval_factor = 0.6
         night_intervals = {}
         for s in staff_data:
-            if s["night_target"][1] > 0:
-                val = s["night_target"][1]
-                calc = (DAYS / val) * interval_factor
+            if s["night_target"] > 0:
+                calc = (DAYS / s["night_target"]) * interval_factor
                 night_intervals[s["name"]] = int(calc)
             else:
                 night_intervals[s["name"]] = 0
 
+        # ルールチェック関数
         def check_rules(name, day_idx, current_sched, shift_type):
             staff_info = next(s for s in staff_data if s["name"] == name)
             
-            # --- ルール定義 ---
+            # 前日データの取得
             if day_idx == 0: prev = staff_info["prev_shift"]
             else: prev = current_sched[name][day_idx - 1]
             
+            # 【ルール1】 夜勤明け(・)の翌日は、必ず休み系(◎,リ休,有)
+            # ※ここで「日勤」などを入れようとしたらNG
             if prev == "・" and shift_type not in ["◎", "リ休", "有"]: return False
-            if prev == "遅" and shift_type in ["早", "日"]: return False
             
-            is_off_type = (shift_type in ["◎", "リ休", "有"])
+            # 【ルール2】 インターバル（遅番の翌日は早/日NG、日勤の翌日は早NG）
+            if prev == "遅" and shift_type in ["早", "日"]: return False
+            if prev == "日" and shift_type == "早": return False
+            
+            is_off_type = (shift_type in ["◎", "リ休", "有", "・"])
             if is_off_type: return True
             
+            # 【ルール3】 連勤制限（5連勤までOK、6連勤NG）
             streak = 0
-            current_add = 2 if shift_type == "夜" else 1
+            current_add = 1
+            # 夜勤は2日分の負荷としてカウントするか、単純日数か。
+            # v40仕様: 夜勤入り(1日)→明け(1日)なので、夜勤自体のカウントは1だが、
+            # シフト並びとしては [勤務, 勤務, 夜, ・, ◎] となる。
+            # ここでは単純に「勤務日が何日続くか」を見る。
             temp_d = day_idx - 1
             while temp_d >= 0:
                 if current_sched[name][temp_d] not in ["", "◎", "リ休", "有"]: 
@@ -290,125 +285,182 @@ def solve_shift(staff_data):
                 else: break
             if temp_d < 0: streak += staff_info["prev_streak"]
             
-            total = streak + current_add
-            if total >= 6: return False
+            if streak + current_add >= 6: return False
             
             return True
 
-        # --- Phase 1: 固定・希望シフト ---
+        # ---------------------------------------------------
+        # Phase 1: ベース作成（固定・希望・パート自動埋め）
+        # ---------------------------------------------------
         for s in staff_data:
             name = s["name"]
-            # 年始固定
+            
+            # (1) 年始固定
             for i in range(3):
                 if s["fixed_shifts"][i] != "":
                     schedule[name][i] = s["fixed_shifts"][i]
+                    # もし固定で夜勤が入っていたら、翌日・翌々日を予約
                     if s["fixed_shifts"][i] == "夜":
                         night_counts[name] += 1
                         if i + 1 < DAYS: schedule[name][i+1] = "・"
+                        if i + 2 < DAYS: schedule[name][i+2] = "◎"
 
-            # 休日
-            for d in s["req_off"]:
+            # (2) 休み希望 (◎, リ休, 有)
+            for d in s["req_off"]: 
                 if schedule[name][d-1] == "": schedule[name][d-1] = "◎"
             for d in s["refresh_days"]:
                 if schedule[name][d-1] == "": schedule[name][d-1] = "リ休"
             for d in s["paid_leave_days"]:
                 if schedule[name][d-1] == "": schedule[name][d-1] = "有"
             
-            # 勤務希望
-            for shifts, req_list in [("早", "req_early"), ("遅", "req_late"), ("日", "req_day"), ("夜", "req_night")]:
+            # (3) 勤務希望 (早, 日, 遅, 夜)
+            # 夜勤希望の場合、セットで翌日(・)と翌々日(◎)を確保する
+            if "req_night" in s:
+                for d_idx in s["req_night"]:
+                    d = d_idx - 1
+                    if 0 <= d < DAYS and schedule[name][d] == "":
+                        # 重複チェックは簡易
+                        schedule[name][d] = "夜"
+                        night_counts[name] += 1
+                        if d < DAYS - 1: schedule[name][d+1] = "・"
+                        if d + 2 < DAYS: schedule[name][d+2] = "◎"
+            
+            for shifts, req_list in [("早", "req_early"), ("遅", "req_late"), ("日", "req_day")]:
                 if req_list in s:
                     for d_idx in s[req_list]:
                         d = d_idx - 1
                         if 0 <= d < DAYS and schedule[name][d] == "":
                             schedule[name][d] = shifts
-                            if shifts == "夜":
-                                night_counts[name] += 1
-                                if d < DAYS - 1: schedule[name][d+1] = "・"
-                                if d + 2 < DAYS and schedule[name][d+2] == "": schedule[name][d+2] = "◎"
-
-        # --- Phase 1.5: パート職員の自動埋め ---
-        # 希望休が入っていない空白部分は、属性に応じて自動で出勤にする
-        for s in staff_data:
-            nm = s["name"]
-            stype = s["type"]
-            # Type 1: パート(日勤のみ) -> 空白はすべて「日」
-            if stype == 1:
+            
+            # (4) パートの自動埋め（最優先）
+            # 希望休などで埋まっていない日は、属性に応じてすべて埋める
+            if s["type"] == 1: # パート(日勤のみ)
                 for d in range(DAYS):
-                    if schedule[nm][d] == "":
-                        schedule[nm][d] = "日"
-            # Type 2: パート(早番のみ) -> 空白はすべて「早」
-            elif stype == 2:
+                    if schedule[name][d] == "": schedule[name][d] = "日"
+            elif s["type"] == 2: # パート(早番のみ)
                 for d in range(DAYS):
-                    if schedule[nm][d] == "":
-                        schedule[nm][d] = "早"
+                    if schedule[name][d] == "": schedule[name][d] = "早"
 
-        # --- Phase 2: 夜勤 ---
-        cands_night = [s for s in staff_data if s["night_target"][1] > 0]
+        # ---------------------------------------------------
+        # Phase 2: 夜勤の割り当て（常勤のみ）
+        # ---------------------------------------------------
+        cands_night = [s for s in staff_data if s["type"] == 0 and s["night_target"] > 0]
         days_indices = list(range(DAYS))
+        # ランダム性を担保
         random.shuffle(days_indices)
         
         for d in days_indices:
+            # 既に誰かが夜勤ならスキップ
             if any(schedule[s["name"]][d] == "夜" for s in staff_data): continue
             
+            # 候補者をシャッフルしてトライ
             random.shuffle(cands_night)
             for s in cands_night:
                 name = s["name"]
-                if schedule[name][d] == "" and check_rules(name, d, schedule, "夜"):
+                # その日、翌日、翌々日が空いているか確認
+                # (既に希望休などが入っている場合はNG)
+                if schedule[name][d] == "":
+                    # 翌日チェック
                     if d < DAYS - 1 and schedule[name][d+1] != "": continue
-                    
-                    schedule[name][d] = "夜"
-                    if d < DAYS - 1: schedule[name][d+1] = "・"
-                    if d + 2 < DAYS and schedule[name][d+2] == "": schedule[name][d+2] = "◎"
-                    night_counts[name] += 1
-                    break
+                    # 翌々日チェック (希望休ならOKだが、勤務が入ってたらNG)
+                    # ただし「夜→・→◎」を強制したいので、あえて空欄か◎であることを要求
+                    if d + 2 < DAYS and schedule[name][d+2] not in ["", "◎", "有", "リ休"]: continue
 
-        # --- Phase 3: 日勤帯 (常勤・夜勤専従の空き枠) ---
-        # パートは既に埋まっているので、ここは常勤(0)と夜勤専従(3)の調整
-        regulars = [s for s in staff_data if s["type"] in [0, 3]]
+                    if check_rules(name, d, schedule, "夜"):
+                        schedule[name][d] = "夜"
+                        night_counts[name] += 1
+                        if d < DAYS - 1: schedule[name][d+1] = "・"
+                        if d + 2 < DAYS and schedule[name][d+2] == "": schedule[name][d+2] = "◎"
+                        break
+
+        # ---------------------------------------------------
+        # Phase 3: 日勤帯の埋め合わせ（常勤のみ）
+        # ---------------------------------------------------
+        regulars = [s for s in staff_data if s["type"] == 0]
+        
         for d in range(DAYS):
-            current_staff = sum([1 for s in staff_data if schedule[s["name"]][d] in ["早", "日", "遅"]])
-            needed = 3 - current_staff
-            if needed > 0:
+            # 1. 遅番がいないなら、可能な常勤を入れる
+            if not any(schedule[s["name"]][d] == "遅" for s in staff_data):
                 random.shuffle(regulars)
-                assigned = 0
                 for s in regulars:
-                    if assigned >= needed: break
                     if schedule[s["name"]][d] == "":
-                        fill = "早" if random.random() < 0.3 else "日"
+                         # 労働日数上限チェック
+                        curr_work = sum([1 for x in schedule[s["name"]] if x in ["早","日","遅","夜","・"]])
+                        if curr_work < work_limits[s["name"]]:
+                            if check_rules(s["name"], d, schedule, "遅"):
+                                schedule[s["name"]][d] = "遅"
+                                break
+            
+            # 2. 早番がいないなら、可能な常勤を入れる
+            if not any(schedule[s["name"]][d] == "早" for s in staff_data):
+                random.shuffle(regulars)
+                for s in regulars:
+                    if schedule[s["name"]][d] == "":
+                        curr_work = sum([1 for x in schedule[s["name"]] if x in ["早","日","遅","夜","・"]])
+                        if curr_work < work_limits[s["name"]]:
+                            if check_rules(s["name"], d, schedule, "早"):
+                                schedule[s["name"]][d] = "早"
+                                break
+
+            # 3. 残りの枠を日勤などで埋める（労働日数上限まで）
+            random.shuffle(regulars)
+            for s in regulars:
+                if schedule[s["name"]][d] == "":
+                    curr_work = sum([1 for x in schedule[s["name"]] if x in ["早","日","遅","夜","・"]])
+                    if curr_work < work_limits[s["name"]]:
+                        # 基本は日勤、たまにランダムで他シフトも？いや基本「日」でOK
+                        fill = "日"
                         if check_rules(s["name"], d, schedule, fill):
                             schedule[s["name"]][d] = fill
-                            assigned += 1
 
-        # 残りは公休
+        # ---------------------------------------------------
+        # Phase 4: 最終調整
+        # ---------------------------------------------------
+        # 空白はすべて公休にする
         for s in staff_data:
             for d in range(DAYS):
                 if schedule[s["name"]][d] == "": schedule[s["name"]][d] = "◎"
 
+        # ---------------------------------------------------
         # スコアリング
+        # ---------------------------------------------------
         score = 0
-        for s in staff_data:
-            # 常勤だけ公休数をチェック
-            if s["type"] not in [1, 2]:
-                cnt = schedule[s["name"]].count("◎")
-                score -= abs(cnt - TARGET_OFF_DAYS) * 50
         
+        # 公休数のズレ（常勤のみ）
         for s in staff_data:
-            tgt = s["night_target"][0]
+            if s["type"] == 0:
+                cnt = schedule[s["name"]].count("◎")
+                score -= abs(cnt - TARGET_OFF_DAYS) * 100
+        
+        # 夜勤数のズレ
+        for s in staff_data:
+            tgt = s["night_target"]
             if tgt > 0:
                 cnt = schedule[s["name"]].count("夜")
                 score -= abs(cnt - tgt) * 50
         
-        shortage = 0
+        # 人員不足ペナルティ（是正はしないが、スコアを下げて良い解を探させる）
+        shortage_penalty = 0
         for d in range(DAYS):
              day_cnt = sum([1 for s in staff_data if schedule[s["name"]][d] in ["早", "日", "遅"]])
-             if day_cnt < 3: shortage += 1
-        score -= shortage * 100
+             if day_cnt < 3: shortage_penalty += 1
+        score -= shortage_penalty * 200
 
+        # 夜勤不在ペナルティ（是正しないが極力避ける）
+        night_missing = 0
+        for d in range(DAYS):
+            if not any(schedule[s["name"]][d] == "夜" for s in staff_data):
+                night_missing += 1
+        score -= night_missing * 500
+
+        # 更新
         if score > best_score:
             best_score = score
             best_schedule = copy.deepcopy(schedule)
             
-        if shortage == 0 and score > -100: break
+        # 満点に近いなら早期終了
+        if shortage_penalty == 0 and night_missing == 0 and score > -50:
+            break
 
     my_bar.progress(100, text="完了！")
     return best_schedule
@@ -418,7 +470,7 @@ def solve_shift(staff_data):
 # ==========================================
 if st.session_state.get('run_solver', False):
     if not staff_data_list:
-        st.error("スタッフが登録されていません。サイドバーから追加してください。")
+        st.error("スタッフが登録されていません。")
         st.session_state.run_solver = False
     else:
         result = solve_shift(staff_data_list)
@@ -436,12 +488,57 @@ if st.session_state.get('shift_success', False):
     
     st.success(f"🎉 シフト案を作成しました（{current_year}年{current_month}月）")
     
+    # ------------------------------------------
+    # アラート生成機能
+    # ------------------------------------------
     df_raw = pd.DataFrame(result).T
-    day_shift_counts = {}
-    for col in df_raw.columns:
-        count = df_raw[col].apply(lambda x: 1 if x in ['早', '日', '遅'] else 0).sum()
-        day_shift_counts[col] = count
+    alerts = []
     
+    # 日ごとのチェック
+    day_shift_counts = {}
+    for d_idx, col in enumerate(df_raw.columns):
+        col_values = df_raw[col].values
+        # 人員数
+        day_cnt = sum([1 for x in col_values if x in ['早', '日', '遅']])
+        day_shift_counts[col] = day_cnt
+        
+        date_obj = datetime.date(current_year, current_month, d_idx + 1)
+        wd_ja = ["月","火","水","木","金","土","日"][date_obj.weekday()]
+        date_str = f"{current_month}/{d_idx+1}({wd_ja})"
+
+        if day_cnt < 3:
+            alerts.append(f"⚠️ {date_str}: 日勤帯が {day_cnt}名 しかいません")
+        
+        # 夜勤不在
+        if '夜' not in col_values:
+             alerts.append(f"🔴 {date_str}: 夜勤者がいません")
+
+    # 個人ごとのチェック
+    for name in df_raw.index:
+        s_info = next(s for s in staff_data_list if s["name"] == name)
+        row = df_raw.loc[name]
+        
+        # 公休数
+        if s_info["type"] == 0:
+            off_cnt = list(row).count("◎")
+            if off_cnt != TARGET_OFF_DAYS:
+                alerts.append(f"⚠️ {name}: 公休が {off_cnt}日 (目標{TARGET_OFF_DAYS})")
+        
+        # 夜勤回数
+        if s_info["night_target"] > 0:
+            n_cnt = list(row).count("夜")
+            if n_cnt != s_info["night_target"]:
+                alerts.append(f"ℹ️ {name}: 夜勤 {n_cnt}回 (目標{s_info['night_target']})")
+
+    # アラート表示
+    if alerts:
+        with st.expander("🚨 シフトの要確認ポイント (クリックで開閉)", expanded=True):
+            for a in alerts:
+                st.write(a)
+
+    # ------------------------------------------
+    # テーブル表示
+    # ------------------------------------------
     df_display = df_raw.copy()
     df_display['夜勤'] = [list(r).count('夜') for r in df_raw.values]
     df_display['公休'] = [list(r).count('◎') for r in df_raw.values]
@@ -467,10 +564,10 @@ if st.session_state.get('shift_success', False):
         elif val == '遅': bg_color = '#FDBA74'
         elif val == '日': bg_color = '#FFFFFF'
         elif val in ['◎', 'リ休', '有']: bg_color = '#DCFCE7'
-        elif isinstance(val, (int, float)) and val > 0:
-            if val < 3: bg_color = '#FECACA' 
-            else: bg_color = '#F0F0F0'
-            return f'background-color: {bg_color}; color: black; font-weight: bold; border: 1px solid #ddd;'
+        elif isinstance(val, (int, float)):
+            if val < 3: bg_color = '#FECACA'; font_weight='bold'
+            else: bg_color = '#F0F0F0'; font_weight='normal'
+            return f'background-color: {bg_color}; color: black; font-weight: {font_weight}; border: 1px solid #ddd;'
         return f'background-color: {bg_color}; color: {color}; border: 1px solid #ddd;'
 
     st.dataframe(df_display.style.map(color_shift), use_container_width=True)
