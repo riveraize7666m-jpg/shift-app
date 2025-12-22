@@ -506,46 +506,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ファイルアップローダーの日本語化（JavaScript注入）
-import streamlit.components.v1 as components
-components.html("""
-<script>
-function translateFileUploader() {
-    const parent = window.parent.document;
-    
-    // ドロップゾーンのテキスト
-    const spans = parent.querySelectorAll('[data-testid="stFileUploadDropzone"] span');
-    spans.forEach(span => {
-        if (span.textContent.includes('Drag and drop')) {
-            span.textContent = 'ここにファイルをドロップ';
-        }
-    });
-    
-    // ファイルサイズ制限のテキスト
-    const smalls = parent.querySelectorAll('[data-testid="stFileUploadDropzone"] small');
-    smalls.forEach(small => {
-        if (small.textContent.includes('Limit')) {
-            small.textContent = '上限 200MB • JSON形式';
-        }
-    });
-    
-    // ボタンのテキスト
-    const buttons = parent.querySelectorAll('[data-testid="stFileUploadDropzone"] button');
-    buttons.forEach(btn => {
-        if (btn.textContent.includes('Browse')) {
-            btn.textContent = 'ファイルを選択';
-        }
-    });
-}
-
-// 初回実行と定期実行（DOMが読み込まれるまで待機）
-setTimeout(translateFileUploader, 100);
-setTimeout(translateFileUploader, 500);
-setTimeout(translateFileUploader, 1000);
-setInterval(translateFileUploader, 1500);
-</script>
-""", height=0)
-
 # ヘッダー
 st.markdown("""
 <div class="main-header">
@@ -598,7 +558,8 @@ with st.sidebar:
     
     # --- 設定ファイル ---
     st.markdown('<div class="sidebar-header">📂 設定ファイル</div>', unsafe_allow_html=True)
-    st.file_uploader("ファイルをドラッグ＆ドロップ", type=["json"], key="setting_file_uploader", on_change=load_settings_callback)
+    st.markdown('<p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.5rem;">↓ 設定ファイル(.json)をドロップ</p>', unsafe_allow_html=True)
+    st.file_uploader("設定ファイル", type=["json"], key="setting_file_uploader", on_change=load_settings_callback, label_visibility="collapsed")
     if st.session_state.get("load_success_flag", False):
         st.success("✓ 復元完了")
         st.session_state.load_success_flag = False
