@@ -10,7 +10,7 @@ import re
 # ==========================================
 # 1. アプリの設定 & デザイン
 # ==========================================
-st.set_page_config(page_title="Shift Manager Pro v44", layout="wide", page_icon="🗓️")
+st.set_page_config(page_title="Shift Manager Pro v45", layout="wide", page_icon="🗓️")
 
 st.markdown("""
     <style>
@@ -30,8 +30,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🗓️ Shift Manager Pro v44")
-st.caption("クラウド対応：平準化ロジック修正版")
+st.title("🗓️ Shift Manager Pro v45")
+st.caption("クラウド対応：連勤ルール修正版（明け込み連勤計算）")
 
 # ==========================================
 # 2. スタッフ管理機能
@@ -254,7 +254,9 @@ def solve_shift(staff_data):
             if is_off_type: return True
             
             streak = 0
-            current_add = 1
+            # ★修正箇所: 夜勤は明けと合わせて2日分としてカウントする
+            current_add = 2 if shift_type.strip() == "夜" else 1
+            
             temp_d = day_idx - 1
             while temp_d >= 0:
                 val = current_sched[name][temp_d].strip()
@@ -383,27 +385,21 @@ def solve_shift(staff_data):
         # ---------------------------------------------------
         # Phase 4: 最終調整 (不足日の穴埋め・平準化)
         # ---------------------------------------------------
-        # まず空白を公休で埋める(ベースライン)
         for s in staff_data:
             for d in range(DAYS):
                 if schedule[s["name"]][d] == "": schedule[s["name"]][d] = "◎"
 
-        # 平準化ロジック (Swap)
-        # 人員が3名未満の日(不足日)に対し、4名以上の日(余剰日)から人を移動させる
-        for _ in range(10): # 最大10回試行して収束させる
-            # 日毎の人数カウント
+        for _ in range(10): 
             day_counts = {}
             for d in range(DAYS):
                 cnt = sum(1 for s in staff_data if schedule[s["name"]][d].strip() in ["早", "日", "遅"])
                 day_counts[d] = cnt
             
-            # 不足日と余剰日を特定
             short_days = [d for d, c in day_counts.items() if c < 3]
             surplus_days = [d for d, c in day_counts.items() if c > 3]
             
-            if not short_days: break # 解消したら終了
+            if not short_days: break 
             
-            # ランダム性を持たせる
             random.shuffle(short_days)
             random.shuffle(surplus_days)
             
@@ -413,21 +409,17 @@ def solve_shift(staff_data):
                 for surp_d in surplus_days:
                     if swapped: break
                     
-                    # 候補者を探す: 余剰日に勤務していて、不足日が公休(◎)の人
                     random.shuffle(regulars)
                     for staff in regulars:
                         name = staff["name"]
-                        shift_src = schedule[name][surp_d] # 移動元シフト
-                        shift_dst = schedule[name][short_d] # 移動先(現在は◎のはず)
+                        shift_src = schedule[name][surp_d]
+                        shift_dst = schedule[name][short_d]
                         
                         if shift_src not in ["早", "日", "遅"]: continue
-                        if shift_dst != "◎": continue # 自動公休のみ対象(希望休◎_は動かさない)
+                        if shift_dst != "◎": continue 
                         
-                        # ルールチェック: 不足日にshift_srcを入れることができるか？
-                        # 1. 基本ルール(連勤、インターバル戻り等)
                         if not check_rules(name, short_d, schedule, shift_src): continue
                         
-                        # 2. 【重要】前方インターバルチェック (check_rulesは後方しか見ない場合があるため)
                         valid_forward = True
                         if short_d < DAYS - 1:
                             next_shift = schedule[name][short_d+1].strip()
@@ -435,13 +427,12 @@ def solve_shift(staff_data):
                             if shift_src == "日" and next_shift == "早": valid_forward = False
                         if not valid_forward: continue
 
-                        # すべてOKならスワップ実行
                         schedule[name][short_d] = shift_src
                         schedule[name][surp_d] = "◎"
                         swapped = True
-                        break # 次の不足日へ
+                        break 
             
-            if not swapped: break # これ以上改善できない
+            if not swapped: break
 
         # ---------------------------------------------------
         # スコアリング
