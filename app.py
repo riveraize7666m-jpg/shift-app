@@ -11,8 +11,8 @@ import re
 # 1. アプリの設定 & デザイン
 # ==========================================
 st.set_page_config(
-    page_title="Shift Manager Pro", 
-    layout="wide", 
+    page_title="Shift Manager Pro",
+    layout="wide",
     page_icon="✦",
     initial_sidebar_state="expanded"
 )
@@ -22,7 +22,7 @@ st.markdown("""
 <style>
     /* Google Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
-    
+
     /* ルート変数 */
     :root {
         --primary: #2563eb;
@@ -48,13 +48,13 @@ st.markdown("""
         --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
         --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     }
-    
+
     /* ベーススタイル */
     .stApp {
         font-family: 'Noto Sans JP', 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
         background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
     }
-    
+
     /* ヘッダータイトル */
     .main-header {
         background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 50%, #6d28d9 100%);
@@ -65,7 +65,7 @@ st.markdown("""
         position: relative;
         overflow: hidden;
     }
-    
+
     .main-header::before {
         content: '';
         position: absolute;
@@ -76,12 +76,12 @@ st.markdown("""
         background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
         animation: shimmer 3s ease-in-out infinite;
     }
-    
+
     @keyframes shimmer {
         0%, 100% { transform: rotate(0deg); }
         50% { transform: rotate(5deg); }
     }
-    
+
     .main-header h1 {
         color: white;
         font-size: 2rem;
@@ -91,7 +91,7 @@ st.markdown("""
         position: relative;
         z-index: 1;
     }
-    
+
     .main-header p {
         color: rgba(255,255,255,0.8);
         font-size: 0.95rem;
@@ -100,7 +100,7 @@ st.markdown("""
         position: relative;
         z-index: 1;
     }
-    
+
     /* サイドバー */
     section[data-testid="stSidebar"] {
         background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
@@ -108,26 +108,26 @@ st.markdown("""
         min-width: 320px !important;
         width: 320px !important;
     }
-    
+
     section[data-testid="stSidebar"] > div {
         padding-top: 1.5rem;
         width: 320px !important;
     }
-    
+
     section[data-testid="stSidebar"] * {
         color: #e2e8f0;
     }
-    
+
     section[data-testid="stSidebar"] .stMarkdown p {
         color: #e2e8f0 !important;
     }
-    
+
     /* サイドバー幅の強制 */
     [data-testid="stSidebar"][aria-expanded="true"] {
         min-width: 320px !important;
         max-width: 320px !important;
     }
-    
+
     /* サイドバーヘッダー */
     .sidebar-header {
         font-family: 'Outfit', 'Noto Sans JP', sans-serif;
@@ -142,7 +142,7 @@ st.markdown("""
         border-left: 3px solid #6366f1;
         border-radius: 0 8px 8px 0;
     }
-    
+
     /* ボタンスタイル */
     .stButton > button {
         width: 100%;
@@ -157,35 +157,35 @@ st.markdown("""
         color: #f1f5f9 !important;
         height: 42px;
     }
-    
+
     .stButton > button[kind="primary"] {
         background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
         color: white !important;
     }
-    
+
     .stButton > button[kind="primary"]:hover {
         background: linear-gradient(135deg, #1d4ed8 0%, #4338ca 100%);
         transform: translateY(-2px);
         box-shadow: var(--shadow-lg);
     }
-    
+
     .stButton > button:not([kind="primary"]) {
         background: #334155;
         color: #f1f5f9 !important;
         border: 1px solid #475569;
     }
-    
+
     .stButton > button:not([kind="primary"]):hover {
         background: #475569;
         border-color: #6366f1;
         color: #ffffff !important;
     }
-    
+
     /* サイドバー上部のボタン行を揃える */
     section[data-testid="stSidebar"] .stButton {
         margin-bottom: 0;
     }
-    
+
     /* 入力フィールド */
     .stTextInput > div > div > input,
     .stNumberInput > div > div > input,
@@ -199,32 +199,32 @@ st.markdown("""
         background: #1e293b !important;
         color: #f1f5f9 !important;
     }
-    
+
     .stTextInput > div > div > input:focus,
     .stNumberInput > div > div > input:focus {
         border-color: #6366f1 !important;
         box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
     }
-    
+
     .stTextInput > div > div > input::placeholder {
         color: #64748b !important;
     }
-    
+
     /* セレクトボックス */
     .stSelectbox > div > div {
         background: #1e293b !important;
         color: #f1f5f9 !important;
     }
-    
+
     div[data-baseweb="select"] > div {
         background: #1e293b !important;
         border-color: #475569 !important;
     }
-    
+
     div[data-baseweb="select"] span {
         color: #f1f5f9 !important;
     }
-    
+
     /* エキスパンダー */
     .streamlit-expanderHeader {
         font-family: 'Noto Sans JP', sans-serif !important;
@@ -237,24 +237,24 @@ st.markdown("""
         transition: all 0.2s ease;
         color: #f1f5f9 !important;
     }
-    
+
     .streamlit-expanderHeader p {
         color: #f1f5f9 !important;
         font-size: 0.95rem !important;
     }
-    
+
     .streamlit-expanderHeader:hover {
         background: #3f4f63 !important;
         border-color: #6366f1 !important;
     }
-    
+
     details[open] > .streamlit-expanderHeader {
         border-bottom-left-radius: 0 !important;
         border-bottom-right-radius: 0 !important;
         border-bottom: none !important;
         background: #3730a3 !important;
     }
-    
+
     .streamlit-expanderContent {
         background: #1e293b !important;
         border: 1px solid #475569 !important;
@@ -262,7 +262,7 @@ st.markdown("""
         border-radius: 0 0 12px 12px !important;
         padding: 1rem !important;
     }
-    
+
     /* サイドバー内のすべてのテキストを見えるように */
     section[data-testid="stSidebar"] label,
     section[data-testid="stSidebar"] p,
@@ -270,19 +270,19 @@ st.markdown("""
     section[data-testid="stSidebar"] .stMarkdown {
         color: #e2e8f0 !important;
     }
-    
+
     section[data-testid="stSidebar"] .stSelectbox label,
     section[data-testid="stSidebar"] .stTextInput label,
     section[data-testid="stSidebar"] .stNumberInput label {
         color: #cbd5e1 !important;
         font-weight: 500 !important;
     }
-    
+
     /* サイドバーのエキスパンダー内のテキスト */
     section[data-testid="stSidebar"] details summary span {
         color: #f1f5f9 !important;
     }
-    
+
     /* アラートボックス */
     .alert-container {
         background: #1e293b;
@@ -292,7 +292,7 @@ st.markdown("""
         box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         border-left: 4px solid #f59e0b;
     }
-    
+
     .alert-title {
         font-family: 'Outfit', 'Noto Sans JP', sans-serif;
         font-weight: 600;
@@ -303,18 +303,18 @@ st.markdown("""
         align-items: center;
         gap: 0.5rem;
     }
-    
+
     .alert-item {
         padding: 0.5rem 0;
         font-size: 0.9rem;
         color: #cbd5e1;
         border-bottom: 1px solid #334155;
     }
-    
+
     .alert-item:last-child {
         border-bottom: none;
     }
-    
+
     /* サクセスメッセージ */
     .success-banner {
         background: linear-gradient(135deg, #10b981 0%, #059669 100%);
@@ -328,11 +328,11 @@ st.markdown("""
         gap: 0.75rem;
         box-shadow: var(--shadow-lg);
     }
-    
+
     .success-banner span {
         font-size: 1.5rem;
     }
-    
+
     /* データフレームコンテナ */
     .dataframe-container {
         background: white;
@@ -341,14 +341,14 @@ st.markdown("""
         box-shadow: var(--shadow-lg);
         margin-top: 1rem;
     }
-    
+
     /* セクション区切り */
     .section-divider {
         height: 1px;
         background: linear-gradient(90deg, transparent, #475569, transparent);
         margin: 1.5rem 0;
     }
-    
+
     /* カード */
     .info-card {
         background: #1e293b;
@@ -358,7 +358,7 @@ st.markdown("""
         border: 1px solid #334155;
         margin-bottom: 1rem;
     }
-    
+
     .info-card-header {
         font-size: 0.85rem;
         font-weight: 600;
@@ -367,13 +367,13 @@ st.markdown("""
         letter-spacing: 0.05em;
         margin-bottom: 0.5rem;
     }
-    
+
     .info-card-value {
         font-size: 1.75rem;
         font-weight: 700;
         color: #f1f5f9;
     }
-    
+
     /* フォーム */
     .stForm {
         background: rgba(51, 65, 85, 0.5);
@@ -381,7 +381,7 @@ st.markdown("""
         padding: 1rem;
         border: 1px solid #475569;
     }
-    
+
     /* ダウンロードボタン */
     .stDownloadButton > button {
         background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
@@ -392,24 +392,24 @@ st.markdown("""
         padding: 0.75rem 1.5rem !important;
         transition: all 0.3s ease !important;
     }
-    
+
     .stDownloadButton > button:hover {
         transform: translateY(-2px) !important;
         box-shadow: var(--shadow-lg) !important;
     }
-    
+
     /* プログレスバー */
     .stProgress > div > div > div {
         background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
         border-radius: 10px;
     }
-    
+
     /* チェックボックス */
     .stCheckbox > label {
         font-family: 'Noto Sans JP', sans-serif;
         font-size: 0.9rem;
     }
-    
+
     /* ファイルアップローダー */
     .stFileUploader > div {
         border-radius: 12px !important;
@@ -418,36 +418,36 @@ st.markdown("""
         transition: all 0.2s ease !important;
         background: #1e293b !important;
     }
-    
+
     .stFileUploader > div:hover {
         border-color: #6366f1 !important;
         background: #334155 !important;
     }
-    
+
     .stFileUploader label {
         color: #cbd5e1 !important;
     }
-    
+
     .stFileUploader small,
     .stFileUploader span {
         color: #94a3b8 !important;
     }
-    
+
     /* ファイルアップローダー内のテキスト */
     [data-testid="stFileUploader"] section {
         color: #e2e8f0 !important;
     }
-    
+
     [data-testid="stFileUploader"] section small {
         color: #94a3b8 !important;
     }
-    
+
     [data-testid="stFileUploader"] button {
         color: #f1f5f9 !important;
         background: #475569 !important;
         border: none !important;
     }
-    
+
     /* ラベル */
     .stTextInput > label,
     .stNumberInput > label,
@@ -458,54 +458,54 @@ st.markdown("""
         font-weight: 500 !important;
         color: #cbd5e1 !important;
     }
-    
+
     /* マークダウンテキスト */
     .stMarkdown, .stMarkdown p {
         color: #e2e8f0 !important;
     }
-    
+
     /* small タグ */
     small {
         color: #94a3b8 !important;
     }
-    
+
     /* スクロールバー */
     ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
     }
-    
+
     ::-webkit-scrollbar-track {
         background: #1e293b;
         border-radius: 4px;
     }
-    
+
     ::-webkit-scrollbar-thumb {
         background: #475569;
         border-radius: 4px;
     }
-    
+
     ::-webkit-scrollbar-thumb:hover {
         background: #64748b;
     }
-    
+
     /* アニメーション */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
-    
+
     .animate-in {
         animation: fadeIn 0.4s ease-out forwards;
     }
-    
+
     /* Streamlit固有の上書き */
     .stAlert {
         background: #1e293b !important;
         border: 1px solid #475569 !important;
         border-radius: 12px !important;
     }
-    
+
     div[data-testid="stExpander"] details {
         border: none !important;
     }
@@ -524,14 +524,27 @@ st.markdown("""
 # 2. セッション状態の初期化
 # ==========================================
 if "staff_list" not in st.session_state:
-    st.session_state.staff_list = [
-        {"name": "スタッフA", "type": 0},
-        {"name": "スタッフB", "type": 0}
-    ]
+    # ✅ 修正点：デフォルトの「スタッフA」「スタッフB」を削除
+    st.session_state.staff_list = []
 
-if "input_year" not in st.session_state: st.session_state.input_year = 2026
-if "input_month" not in st.session_state: st.session_state.input_month = 2
-if "target_off" not in st.session_state: st.session_state.target_off = 9
+if "input_year" not in st.session_state:
+    st.session_state.input_year = 2026
+if "input_month" not in st.session_state:
+    st.session_state.input_month = 2
+if "target_off" not in st.session_state:
+    st.session_state.target_off = 9
+
+# run_solver の初期化（サイドバー/トップ両方のボタンで使う）
+if "run_solver" not in st.session_state:
+    st.session_state.run_solver = False
+
+# 進捗表示が「個人設定なし」で✅にならないよう、ここでは最低限の初期値のみ準備
+# （常勤がいる場合の夜勤目標のデフォルト）
+for s in st.session_state.staff_list:
+    if s.get("type", 0) == 0:
+        k = f"night_{s['name']}"
+        if k not in st.session_state:
+            st.session_state[k] = 4
 
 # ==========================================
 # 3. 設定の読込コールバック
@@ -557,23 +570,23 @@ def load_settings_callback():
 def show_help_dialog():
     st.markdown("""
     ### 🚀 シフト作成の流れ
-    
+
     **Step 1. 設定ファイルの読み込み（任意）**
     > 以前保存した設定ファイル(.json)がある場合、ドロップして復元できます。
-    
+
     **Step 2. シフト設定**
     > 対象の年月と、常勤スタッフの公休日数を設定します。
-    
+
     **Step 3. 個人設定**
     > 各スタッフの希望シフト・希望休・夜勤目標などを設定します。
-    
+
     **Step 4. シフト作成**
     > 「シフトを作成」ボタンをクリックすると、自動でシフトを作成します。
-    
+
     ---
-    
+
     ### 📋 シフト記号の意味
-    
+
     | 記号 | 説明 |
     |:---:|:---|
     | 早 | 早番 |
@@ -584,35 +597,35 @@ def show_help_dialog():
     | ◎ | 公休 |
     | 有 | 有給休暇 |
     | リ休 | リフレッシュ休暇 |
-    
+
     ---
-    
+
     ### 👤 スタッフ属性について
-    
+
     | 属性 | アイコン | 説明 |
     |:---:|:---:|:---|
     | 常勤 | 🔵 | 全シフト対応可能 |
     | パート(日勤) | 🟢 | 日勤のみ対応 |
     | パート(早番) | 🟡 | 早番のみ対応 |
-    
+
     ---
-    
+
     ### ⚠️ 確認ポイントについて
-    
+
     シフト作成後、以下の問題がある場合はアラートが表示されます：
-    
+
     - 🔴 **夜勤者なし** - その日の夜勤担当がいません
     - ⚠️ **日勤帯不足** - 日勤帯（早・日・遅）のスタッフが3名未満です
     - ℹ️ **目標未達** - 公休数や夜勤回数が目標と異なります
-    
+
     ---
-    
+
     ### 💾 設定の保存
-    
+
     サイドバー下部の「設定を保存」ボタンで、現在の設定をファイルに保存できます。
     次回以降、このファイルを読み込むことで設定を復元できます。
     """)
-    
+
     if st.button("閉じる", use_container_width=True):
         st.rerun()
 
@@ -629,7 +642,7 @@ def get_progress_status():
         "personal": {"done": False, "configured": 0, "total": 0, "icon": "⬜", "color": "#64748b"},
         "ready": False
     }
-    
+
     # Step 1: スタッフ登録
     staff_count = len(st.session_state.staff_list)
     status["staff"]["count"] = staff_count
@@ -637,7 +650,7 @@ def get_progress_status():
         status["staff"]["done"] = True
         status["staff"]["icon"] = "✅"
         status["staff"]["color"] = "#22c55e"
-    
+
     # Step 2: シフト設定（年月と公休数が設定されているか）
     year_set = st.session_state.get('input_year', 2025) is not None
     month_set = st.session_state.get('input_month', 1) is not None
@@ -646,29 +659,37 @@ def get_progress_status():
         status["settings"]["done"] = True
         status["settings"]["icon"] = "✅"
         status["settings"]["color"] = "#22c55e"
-    
+
     # Step 3: 個人設定（常勤スタッフの夜勤目標が設定されているか）
+    # ✅ 修正点：常勤が0名のときに「✅」にならない（個人設定が一つも無いならチェックしない）
     regulars = [s for s in st.session_state.staff_list if s.get("type", 0) == 0]
     status["personal"]["total"] = len(regulars)
+
     configured = 0
     for s in regulars:
         nm = s["name"]
         night_target = st.session_state.get(f"night_{nm}", 0)
-        if night_target > 0:
+        if night_target and night_target > 0:
             configured += 1
     status["personal"]["configured"] = configured
-    
-    if len(regulars) == 0 or configured >= len(regulars) * 0.5:  # 50%以上設定でOK
-        status["personal"]["done"] = True
-        status["personal"]["icon"] = "✅"
-        status["personal"]["color"] = "#22c55e"
-    elif configured > 0:
-        status["personal"]["icon"] = "🔶"
-        status["personal"]["color"] = "#f59e0b"
-    
-    # 全体の準備状態
+
+    if len(regulars) == 0:
+        status["personal"]["done"] = False
+        status["personal"]["icon"] = "⬜"
+        status["personal"]["color"] = "#64748b"
+    else:
+        # 50%以上設定でOK（既存ロジック維持）
+        if configured >= len(regulars) * 0.5:
+            status["personal"]["done"] = True
+            status["personal"]["icon"] = "✅"
+            status["personal"]["color"] = "#22c55e"
+        elif configured > 0:
+            status["personal"]["icon"] = "🔶"
+            status["personal"]["color"] = "#f59e0b"
+
+    # 全体の準備状態（既存ロジック維持：スタッフ＋シフト設定）
     status["ready"] = status["staff"]["done"] and status["settings"]["done"]
-    
+
     return status
 
 progress = get_progress_status()
@@ -684,17 +705,16 @@ with st.sidebar:
     else:
         btn_label = "🚀 シフトを作成"
         btn_disabled = False
-    
+
     col_btn1, col_btn2 = st.columns([3, 1])
     with col_btn1:
+        # ✅ 修正点：未クリック時に run_solver を False に上書きしない（トップのボタン rerun 対応）
         if st.button(btn_label, type="primary", use_container_width=True, disabled=btn_disabled):
             st.session_state.run_solver = True
-        else:
-            st.session_state.run_solver = False
     with col_btn2:
         if st.button("❓", use_container_width=True):
             show_help_dialog()
-    
+
     # --- 不足項目の表示 ---
     if not progress["ready"]:
         missing_items = []
@@ -702,15 +722,15 @@ with st.sidebar:
             missing_items.append("スタッフ未登録")
         if not progress["settings"]["done"]:
             missing_items.append("シフト設定")
-        
+
         st.markdown(f'''
 <div style="background: rgba(245, 158, 11, 0.1); border-radius: 8px; padding: 0.5rem 0.75rem; margin-top: 0.5rem; border-left: 3px solid #f59e0b;">
     <span style="color: #fcd34d; font-size: 0.8rem;">⚠️ 不足: {" / ".join(missing_items)}</span>
 </div>
 ''', unsafe_allow_html=True)
-    
+
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
-    
+
     # --- 設定ファイル ---
     st.markdown(f'<div class="sidebar-header">📂 設定ファイル <span style="font-size: 0.75rem; color: #64748b;">(任意)</span></div>', unsafe_allow_html=True)
     st.markdown('<p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 0.5rem;">過去の設定を復元できます</p>', unsafe_allow_html=True)
@@ -718,9 +738,9 @@ with st.sidebar:
     if st.session_state.get("load_success_flag", False):
         st.success("✓ 復元完了")
         st.session_state.load_success_flag = False
-    
+
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
-    
+
     # --- シフト設定 ---
     settings_status = progress["settings"]
     st.markdown(f'''
@@ -731,13 +751,15 @@ with st.sidebar:
 ''', unsafe_allow_html=True)
 
     col_y, col_m = st.columns(2)
-    with col_y: YEAR = st.number_input("年", 2025, 2030, key="input_year")
-    with col_m: MONTH = st.number_input("月", 1, 12, key="input_month")
+    with col_y:
+        YEAR = st.number_input("年", 2025, 2030, key="input_year")
+    with col_m:
+        MONTH = st.number_input("月", 1, 12, key="input_month")
 
     _, DAYS = calendar.monthrange(YEAR, MONTH)
-    
+
     TARGET_OFF_DAYS = st.number_input("常勤の公休数", 1, 15, key="target_off", help="目標となる公休日数を設定")
-    
+
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
 # ==========================================
@@ -748,69 +770,87 @@ if personal_status["total"] > 0:
     personal_label = f'<span style="font-size: 0.75rem; color: #94a3b8;">({personal_status["configured"]}/{personal_status["total"]}名)</span>'
 else:
     personal_label = ''
+
 st.sidebar.markdown(f'''
 <div class="sidebar-header">
     <span style="color: {personal_status["color"]};">{personal_status["icon"]}</span> 
     👤 個人設定 {personal_label}
 </div>
 ''', unsafe_allow_html=True)
+
 SHIFT_OPTIONS = ["早", "日", "遅", "夜", "・", "◎", "有", "リ休"]
 staff_data_list = []
 
 def parse_days(input_str):
-    if not input_str or not input_str.strip(): return []
+    if not input_str or not input_str.strip():
+        return []
     try:
         fixed_str = input_str.replace('，', ',').translate(str.maketrans('０１２３４５６７８９', '0123456789'))
         return sorted(list(set([int(x.strip()) for x in fixed_str.split(',') if x.strip().isdigit()])))
-    except: return []
+    except:
+        return []
 
 for idx, staff in enumerate(st.session_state.staff_list):
     name = staff["name"]
     stype = staff["type"]
-    
+
     type_emoji = "🔵" if stype == 0 else "🟢" if stype == 1 else "🟡"
-    
+
     with st.sidebar.expander(f"{type_emoji} {name}", expanded=False):
         type_labels = ["常勤", "パート(日勤のみ)", "パート(早番のみ)"]
         current_idx = 0
-        if stype == 1: current_idx = 1
-        elif stype == 2: current_idx = 2
-        
+        if stype == 1:
+            current_idx = 1
+        elif stype == 2:
+            current_idx = 2
+
         new_type_label = st.selectbox("属性", type_labels, index=current_idx, key=f"type_c_{name}_{idx}")
         new_code = 0
-        if new_type_label == "パート(日勤のみ)": new_code = 1
-        elif new_type_label == "パート(早番のみ)": new_code = 2
+        if new_type_label == "パート(日勤のみ)":
+            new_code = 1
+        elif new_type_label == "パート(早番のみ)":
+            new_code = 2
         staff["type"] = new_code
         stype = new_code
 
         c1, c2 = st.columns(2)
         key_prev = f"prev_{name}"
-        if key_prev not in st.session_state: st.session_state[key_prev] = SHIFT_OPTIONS[5]
-        with c1: prev_shift = st.selectbox("前月末シフト", SHIFT_OPTIONS, key=key_prev)
-        
+        if key_prev not in st.session_state:
+            st.session_state[key_prev] = SHIFT_OPTIONS[5]
+        with c1:
+            prev_shift = st.selectbox("前月末シフト", SHIFT_OPTIONS, key=key_prev)
+
         with c2:
             key_streak = f"streak_{name}"
-            if key_streak not in st.session_state: st.session_state[key_streak] = 0
+            if key_streak not in st.session_state:
+                st.session_state[key_streak] = 0
             prev_streak = st.number_input("連勤日数", 0, 10, key=key_streak)
-        
+
         f1, f2, f3 = "", "", ""
         if st.checkbox("年始固定シフト", key=f"open_fix_{name}"):
             fix_opts = [""] + SHIFT_OPTIONS
             key_f1, key_f2, key_f3 = f"f1_{name}", f"f2_{name}", f"f3_{name}"
-            if key_f1 not in st.session_state: st.session_state[key_f1] = ""
-            if key_f2 not in st.session_state: st.session_state[key_f2] = ""
-            if key_f3 not in st.session_state: st.session_state[key_f3] = ""
+            if key_f1 not in st.session_state:
+                st.session_state[key_f1] = ""
+            if key_f2 not in st.session_state:
+                st.session_state[key_f2] = ""
+            if key_f3 not in st.session_state:
+                st.session_state[key_f3] = ""
             cols = st.columns(3)
-            with cols[0]: f1 = st.selectbox("1日", fix_opts, key=key_f1)
-            with cols[1]: f2 = st.selectbox("2日", fix_opts, key=key_f2)
-            with cols[2]: f3 = st.selectbox("3日", fix_opts, key=key_f3)
+            with cols[0]:
+                f1 = st.selectbox("1日", fix_opts, key=key_f1)
+            with cols[1]:
+                f2 = st.selectbox("2日", fix_opts, key=key_f2)
+            with cols[2]:
+                f3 = st.selectbox("3日", fix_opts, key=key_f3)
 
         night_target_val = 0
         if stype != 0:
             st.info("💡 このスタッフは夜勤対象外です")
         else:
             key_night = f"night_{name}"
-            if key_night not in st.session_state: st.session_state[key_night] = 4
+            if key_night not in st.session_state:
+                st.session_state[key_night] = 4
             night_target_val = st.number_input("🌙 夜勤目標回数", 0, 10, key=key_night)
 
         st.markdown("**希望シフト** <small style='color:#666'>（例: 7,20）</small>", unsafe_allow_html=True)
@@ -821,7 +861,7 @@ for idx, staff in enumerate(st.session_state.staff_list):
         with c2:
             req_e_in = st.text_input("早番希望", key=f"req_e_{name}", label_visibility="collapsed", placeholder="早番希望日")
             req_d_in = st.text_input("日勤希望", key=f"req_d_{name}", label_visibility="collapsed", placeholder="日勤希望日")
-        
+
         st.markdown("**休暇設定**", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         with c1:
@@ -860,12 +900,14 @@ with st.sidebar.form("add_staff_form", clear_on_submit=True):
     new_name = st.text_input("名前", placeholder="新しいスタッフ名")
     new_type = st.selectbox("属性", ["常勤", "パート(日勤のみ)", "パート(早番のみ)"], index=0)
     submitted = st.form_submit_button("➕ スタッフを追加", type="primary")
-    
+
     if submitted and new_name:
         type_code = 0
-        if new_type == "パート(日勤のみ)": type_code = 1
-        elif new_type == "パート(早番のみ)": type_code = 2
-        
+        if new_type == "パート(日勤のみ)":
+            type_code = 1
+        elif new_type == "パート(早番のみ)":
+            type_code = 2
+
         st.session_state.staff_list.append({"name": new_name, "type": type_code})
         st.success(f"✓ {new_name}さんを追加しました")
         st.rerun()
@@ -885,18 +927,19 @@ export_data = {
     'input_year': st.session_state.get('input_year'),
     'input_month': st.session_state.get('input_month'),
     'target_off': st.session_state.get('target_off'),
-    'staff_list_save': st.session_state.staff_list 
+    'staff_list_save': st.session_state.staff_list
 }
 for s in st.session_state.staff_list:
     nm = s["name"]
     keys = [
-        f"prev_{nm}", f"streak_{nm}", f"open_fix_{nm}", 
-        f"f1_{nm}", f"f2_{nm}", f"f3_{nm}", f"night_{nm}", 
+        f"prev_{nm}", f"streak_{nm}", f"open_fix_{nm}",
+        f"f1_{nm}", f"f2_{nm}", f"f3_{nm}", f"night_{nm}",
         f"req_n_{nm}", f"req_e_{nm}", f"req_l_{nm}", f"req_d_{nm}",
         f"off_{nm}", f"work_{nm}", f"ref_{nm}", f"paid_{nm}"
     ]
     for k in keys:
-        if k in st.session_state: export_data[k] = st.session_state[k]
+        if k in st.session_state:
+            export_data[k] = st.session_state[k]
 st.sidebar.download_button("💾 設定を保存", json.dumps(export_data, indent=2, ensure_ascii=False), 'shift_settings.json', 'application/json', use_container_width=True)
 
 # ==========================================
@@ -905,7 +948,7 @@ st.sidebar.download_button("💾 設定を保存", json.dumps(export_data, inden
 def solve_shift(staff_data):
     progress_text = "✨ シフトを最適化中..."
     my_bar = st.progress(0, text=progress_text)
-    
+
     errors = []
     best_schedule = None
     best_score = -999999
@@ -1013,7 +1056,7 @@ def solve_shift(staff_data):
         # ルール3: 連勤チェック（前後両方向）
         # 前方向の連勤
         streak_before = count_consecutive_work(name, day_idx, current_sched)
-        
+
         # 後方向の連勤（翌日以降で既に勤務が入っている場合）
         streak_after = 0
         d = day_idx + 1
@@ -1041,7 +1084,7 @@ def solve_shift(staff_data):
         if staff_info["type"] == 0 and shift_clean in ["早", "日", "遅"]:
             # 前後の連勤中に夜勤があるかチェック
             has_night = has_night_in_streak(name, day_idx, current_sched)
-            
+
             # 後方向に夜勤があるかもチェック
             d = day_idx + 1
             while d < DAYS:
@@ -1053,7 +1096,7 @@ def solve_shift(staff_data):
                     d += 1
                 else:
                     break
-            
+
             # 日勤帯のみの連勤数をカウント
             day_streak = 0
             # 前方向
@@ -1080,7 +1123,7 @@ def solve_shift(staff_data):
                     break
                 else:
                     break
-            
+
             # 日勤帯のみで5連勤以上は禁止（夜勤を含まない場合）
             if day_streak >= 5 and not has_night:
                 return False
@@ -1090,18 +1133,18 @@ def solve_shift(staff_data):
     def can_place_night(name, day_idx, current_sched):
         """夜勤を配置できるかチェック"""
         staff_info = next(s for s in staff_data if s["name"] == name)
-        
+
         if staff_info["type"] != 0:
             return False
         if current_sched[name][day_idx] != "":
             return False
-        
+
         # 翌日（明け）が空いているか
         if day_idx + 1 < DAYS:
             next_val = current_sched[name][day_idx + 1].strip()
             if next_val not in ["", "・"]:
                 return False
-        
+
         # 明け翌日は◎のみ（有休・リ休は不可）
         if day_idx + 2 < DAYS:
             next2_val = current_sched[name][day_idx + 2].strip()
@@ -1276,18 +1319,15 @@ def solve_shift(staff_data):
         for s in regulars:
             name = s["name"]
             empty_days = [d for d in range(DAYS) if schedule[name][d] == ""]
-            
+
             if not empty_days:
                 continue
 
             # 各空き日の「人員余裕度」を計算
             day_scores = []
             for d in empty_days:
-                # その日の日勤帯人数（仮に公休を入れた場合）
                 day_cnt = count_day_staff(schedule, d, ["早", "日", "遅"])
-                # 希望休等の固定休みの数
                 fixed_off = count_required_off(d, schedule)
-                # 余裕度 = 日勤帯人数 + 他の空きがある人数
                 others_empty = sum(1 for s2 in regulars if s2["name"] != name and schedule[s2["name"]][d] == "")
                 score = day_cnt + others_empty - fixed_off
                 day_scores.append((d, score))
@@ -1314,14 +1354,13 @@ def solve_shift(staff_data):
                     for s in regulars:
                         name = s["name"]
                         if schedule[name][d] == "日":
-                            # 一時的に空にしてcheck_rulesでチェック
                             schedule[name][d] = ""
                             if check_rules(name, d, schedule, "早"):
                                 schedule[name][d] = "早"
                                 improved = True
                                 break
                             else:
-                                schedule[name][d] = "日"  # 元に戻す
+                                schedule[name][d] = "日"
 
                 # 遅番不足: 日勤者を遅番に変更
                 if late_cnt == 0:
@@ -1349,16 +1388,14 @@ def solve_shift(staff_data):
                         for s in regulars:
                             name = s["name"]
                             if schedule[name][d] == "◎":
-                                # 他の余裕日を探す
                                 other_days = []
                                 for od in range(DAYS):
                                     if od != d and schedule[name][od] == "◎":
                                         od_total = count_day_staff(schedule, od, ["早", "日", "遅"])
                                         if od_total >= 3:
                                             other_days.append(od)
-                                
+
                                 if other_days:
-                                    # 元の日を日勤に変更可能かチェック
                                     schedule[name][d] = ""
                                     if check_rules(name, d, schedule, "日"):
                                         schedule[name][d] = "日"
@@ -1472,7 +1509,7 @@ if st.session_state.get('shift_success', False):
     current_month = st.session_state.current_month
     result = st.session_state.shift_result
     shift_errors = st.session_state.get('shift_errors', [])
-    
+
     # サクセスメッセージ
     st.markdown(f"""
 <div class="success-banner">
@@ -1480,62 +1517,61 @@ if st.session_state.get('shift_success', False):
     <div>シフト案を作成しました — {current_year}年{current_month}月</div>
 </div>
 """, unsafe_allow_html=True)
-    
+
     # 配置エラーがあれば表示
     if shift_errors:
         error_html = '<div style="background: #450a0a; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; border: 1px solid #dc2626;">'
         error_html += '<div style="font-weight: 600; font-size: 0.9rem; color: #fca5a5; margin-bottom: 0.5rem;">⚠️ 人員配置の警告</div>'
         error_html += '<div style="color: #fecaca; font-size: 0.85rem;">'
-        for err in shift_errors[:10]:  # 最大10件表示
+        for err in shift_errors[:10]:
             error_html += f'<div style="margin-bottom: 0.25rem;">• {err}</div>'
         if len(shift_errors) > 10:
             error_html += f'<div style="margin-top: 0.5rem; color: #f87171;">...他 {len(shift_errors) - 10} 件</div>'
         error_html += '</div></div>'
         st.markdown(error_html, unsafe_allow_html=True)
-    
+
     # ------------------------------------------
     # アラート
     # ------------------------------------------
     df_raw = pd.DataFrame(result).T
     alerts = []
-    
+
     day_shift_counts = {}
     for d_idx, col in enumerate(df_raw.columns):
         col_values = [x.strip() for x in df_raw[col].values]
         day_cnt = sum([1 for x in col_values if x in ['早', '日', '遅']])
         day_shift_counts[col] = day_cnt
-        
+
         date_obj = datetime.date(current_year, current_month, d_idx + 1)
         wd_ja = ["月","火","水","木","金","土","日"][date_obj.weekday()]
         date_str = f"{current_month}/{d_idx+1}({wd_ja})"
 
         if day_cnt < 3:
             alerts.append(("warning", f"{date_str}: 日勤帯が {day_cnt}名"))
-        
+
         if '夜' not in col_values:
-             alerts.append(("error", f"{date_str}: 夜勤者なし"))
+            alerts.append(("error", f"{date_str}: 夜勤者なし"))
 
     for name in df_raw.index:
         s_info = next((s for s in staff_data_list if s["name"] == name), None)
         if s_info is None:
-            continue  # スタッフが見つからない場合はスキップ
+            continue
         row = [x.strip() for x in df_raw.loc[name]]
-        
+
         if s_info["type"] == 0:
             off_cnt = row.count("◎")
             if off_cnt != TARGET_OFF_DAYS:
                 alerts.append(("info", f"{name}: 公休 {off_cnt}日 (目標{TARGET_OFF_DAYS})"))
-        
+
         if s_info["night_target"] > 0:
             n_cnt = row.count("夜")
             if n_cnt != s_info["night_target"]:
                 alerts.append(("info", f"{name}: 夜勤 {n_cnt}回 (目標{s_info['night_target']})"))
 
     if alerts:
-        # カスタムアラートボックス
         alert_html = '<div style="background: #1e293b; border-radius: 16px; padding: 1.25rem; margin-bottom: 1.5rem; border: 1px solid #475569; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">'
         alert_html += '<div style="font-weight: 600; font-size: 1rem; color: #f1f5f9; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">📋 確認ポイント</div>'
-        
+
         for alert_type, msg in alerts:
             if alert_type == "error":
                 icon = "🔴"
@@ -1552,9 +1588,9 @@ if st.session_state.get('shift_success', False):
                 bg = "rgba(59, 130, 246, 0.15)"
                 border = "#3b82f6"
                 color = "#93c5fd"
-            
+
             alert_html += f'<div style="background: {bg}; border-left: 3px solid {border}; padding: 0.6rem 1rem; margin-bottom: 0.5rem; border-radius: 0 8px 8px 0;"><span style="color: {color}; font-size: 0.9rem;">{icon} {msg}</span></div>'
-        
+
         alert_html += '</div>'
         st.markdown(alert_html, unsafe_allow_html=True)
 
@@ -1563,13 +1599,13 @@ if st.session_state.get('shift_success', False):
     # ------------------------------------------
     _, current_days = calendar.monthrange(current_year, current_month)
     weekdays_ja = ["月", "火", "水", "木", "金", "土", "日"]
-    
+
     def get_shift_style(val_str):
         val = val_str.strip() if val_str else ""
         if val == '◎' or val_str == '◎ ':
-            if val_str == '◎ ':  # 希望休 - シアン/ターコイズで目立たせる
+            if val_str == '◎ ':
                 return 'background: linear-gradient(135deg, #67e8f9, #a5f3fc); color: #0e7490; font-weight: 700; box-shadow: 0 0 6px rgba(34, 211, 238, 0.4);'
-            return 'background: #86efac; color: #166534;'  # 通常公休 - 明るい緑
+            return 'background: #86efac; color: #166534;'
         elif val == '有':
             return 'background: linear-gradient(135deg, #f9a8d4, #fbcfe8); color: #9d174d; font-weight: 600;'
         elif val == 'リ休':
@@ -1585,8 +1621,7 @@ if st.session_state.get('shift_success', False):
         elif val == '日':
             return 'background: #f1f5f9; color: #334155; font-weight: 600;'
         return 'background: #334155; color: #94a3b8;'
-    
-    # HTMLテーブル構築
+
     html_parts = ['''
 <style>
 .shift-table-container {
@@ -1707,62 +1742,57 @@ if st.session_state.get('shift_success', False):
 <thead><tr>
 <th class="name-header">スタッフ</th>
 ''']
-    
-    # ヘッダー行（日付）
+
     for d in range(1, current_days + 1):
         date_obj = datetime.date(current_year, current_month, d)
         wd_idx = date_obj.weekday()
         wd = weekdays_ja[wd_idx]
-        
+
         th_class = ""
-        if wd_idx == 6:  # 日曜
+        if wd_idx == 6:
             th_class = ' class="sunday"'
-        elif wd_idx == 5:  # 土曜
+        elif wd_idx == 5:
             th_class = ' class="weekend"'
-        
+
         html_parts.append(f'<th{th_class}>{d}<br><span style="font-size:0.65rem">{wd}</span></th>')
-    
+
     html_parts.append('<th>夜勤</th><th>公休</th></tr></thead><tbody>')
-    
-    # データ行
+
     for name in df_raw.index:
         html_parts.append('<tr>')
         html_parts.append(f'<td class="name-cell">{name}</td>')
-        
+
         night_count = 0
         off_count = 0
-        
+
         for d in range(current_days):
             val = df_raw.loc[name].iloc[d]
             val_str = str(val) if val else ""
             val_clean = val_str.strip()
-            
+
             if val_clean == '夜':
                 night_count += 1
             if val_clean == '◎':
                 off_count += 1
-            
+
             style = get_shift_style(val_str)
             display_val = val_clean if val_clean else ""
             html_parts.append(f'<td style="{style}">{display_val}</td>')
-        
-        # 集計列
+
         html_parts.append(f'<td class="summary-cell">{night_count}</td>')
         html_parts.append(f'<td class="summary-cell">{off_count}</td>')
         html_parts.append('</tr>')
-    
-    # 日勤帯合計行
+
     html_parts.append('<tr class="total-row">')
     html_parts.append('<td class="name-cell">日勤計</td>')
-    
+
     for d in range(current_days):
         cnt = day_shift_counts.get(d, 0)
         td_class = ' class="shortage"' if cnt < 3 else ''
         html_parts.append(f'<td{td_class}>{cnt}</td>')
-    
+
     html_parts.append('<td></td><td></td></tr>')
-    
-    # 早番人数行
+
     html_parts.append('<tr class="total-row">')
     html_parts.append('<td class="name-cell" style="font-size: 0.75rem; color: #fbbf24;">┗ 早</td>')
     for d in range(current_days):
@@ -1773,8 +1803,7 @@ if st.session_state.get('shift_success', False):
             td_style = 'background: #7f1d1d; color: #fecaca; font-size: 0.75rem; font-weight: 700;'
         html_parts.append(f'<td style="{td_style}">{early_cnt}</td>')
     html_parts.append('<td></td><td></td></tr>')
-    
-    # 日勤人数行
+
     html_parts.append('<tr class="total-row">')
     html_parts.append('<td class="name-cell" style="font-size: 0.75rem; color: #e2e8f0;">┗ 日</td>')
     for d in range(current_days):
@@ -1783,8 +1812,7 @@ if st.session_state.get('shift_success', False):
         td_style = 'background: #0f172a; color: #e2e8f0; font-size: 0.75rem;'
         html_parts.append(f'<td style="{td_style}">{day_cnt}</td>')
     html_parts.append('<td></td><td></td></tr>')
-    
-    # 遅番人数行
+
     html_parts.append('<tr class="total-row">')
     html_parts.append('<td class="name-cell" style="font-size: 0.75rem; color: #fb923c;">┗ 遅</td>')
     for d in range(current_days):
@@ -1795,10 +1823,9 @@ if st.session_state.get('shift_success', False):
             td_style = 'background: #7f1d1d; color: #fecaca; font-size: 0.75rem; font-weight: 700;'
         html_parts.append(f'<td style="{td_style}">{late_cnt}</td>')
     html_parts.append('<td></td><td></td></tr>')
-    
+
     html_parts.append('</tbody></table></div>')
-    
-    # 凡例
+
     html_parts.append('''
 <div class="legend-container">
     <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #fde047, #fef08a); color: #713f12;">早</div>早番</div>
@@ -1812,44 +1839,44 @@ if st.session_state.get('shift_success', False):
     <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #fdba74, #fed7aa); color: #9a3412;">リ</div>リフレッシュ休暇</div>
 </div>
 ''')
-    
+
     st.markdown(''.join(html_parts), unsafe_allow_html=True)
-    
+
     # ダウンロードボタン
     st.markdown('<div style="margin-top: 1.5rem;"></div>', unsafe_allow_html=True)
-    
-    # CSV用のデータフレーム作成
+
     df_csv = df_raw.copy()
     df_csv = df_csv.replace("◎ ", "◎")
-    
-    # 列名を日付形式に変更
+
     csv_cols = []
     for d in range(1, current_days + 1):
         wd = weekdays_ja[datetime.date(current_year, current_month, d).weekday()]
         csv_cols.append(f"{d}({wd})")
     df_csv.columns = csv_cols
-    
-    # 夜勤・公休列を追加
+
     df_csv['夜勤'] = [list(map(str.strip, r)).count('夜') for r in df_raw.values]
     df_csv['公休'] = [list(map(str.strip, r)).count('◎') for r in df_raw.values]
-    
+
     csv = df_csv.to_csv(sep=",").encode('utf-8_sig')
-    
+
     col1, col2, col3 = st.columns([1, 1, 2])
     with col1:
         st.download_button(
-            "📥 CSVダウンロード", 
-            csv, 
-            f'shift_{current_year}_{current_month}.csv', 
+            "📥 CSVダウンロード",
+            csv,
+            f'shift_{current_year}_{current_month}.csv',
             'text/csv',
             use_container_width=True
         )
 
 else:
     # 初期状態の表示 - 進捗チェックリスト形式
-    
-    # ヘッダー
-    st.markdown("""
+
+    # ✅ 修正点：トップのカードを横並び＆同じ高さに
+    left_col, right_col = st.columns([2, 1])
+
+    with left_col:
+        st.markdown("""
 <div style="
     background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
     border-radius: 16px;
@@ -1858,6 +1885,10 @@ else:
     box-shadow: 0 8px 30px rgba(0,0,0,0.25);
     margin-top: 0.5rem;
     border: 1px solid #475569;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 ">
     <h2 style="color: #f1f5f9; font-weight: 600; margin: 0; font-size: 1.2rem;">シフトを作成しましょう</h2>
     <p style="color: #94a3b8; font-size: 0.85rem; margin: 0.5rem 0 0 0;">
@@ -1865,9 +1896,60 @@ else:
     </p>
 </div>
 """, unsafe_allow_html=True)
-    
+
+    with right_col:
+        if progress["ready"]:
+            # ✅ 修正点：文言変更（サイドバー上部〜をやめる）
+            st.markdown('''
+<div style="
+    background: linear-gradient(135deg, #065f46 0%, #047857 100%);
+    border-radius: 16px;
+    padding: 1.5rem 1.5rem;
+    text-align: center;
+    border: 1px solid #10b981;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    margin-top: 0.5rem;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+">
+    <div style="color: #d1fae5; font-weight: 600; font-size: 0.95rem;">✨ 準備完了！</div>
+    <div style="color: #a7f3d0; font-size: 0.85rem; margin-top: 0.25rem;">下の「シフトを作成」ボタンをクリック</div>
+</div>
+''', unsafe_allow_html=True)
+
+            st.markdown('<div style="height: 0.6rem;"></div>', unsafe_allow_html=True)
+
+            # ✅ 修正点：「使い方ガイド」を削除→「シフトを作成」ボタンを設置
+            if st.button("🚀 シフトを作成", type="primary", use_container_width=True):
+                st.session_state.run_solver = True
+                st.rerun()
+
+        else:
+            st.markdown('''
+<div style="
+    background: rgba(100, 116, 139, 0.1);
+    border-radius: 16px;
+    padding: 1.5rem 1.5rem;
+    text-align: center;
+    border: 1px solid #475569;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    margin-top: 0.5rem;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+">
+    <div style="color: #94a3b8; font-size: 0.85rem;">不足ステップを完了すると<br>シフトを作成できます</div>
+</div>
+''', unsafe_allow_html=True)
+
+            st.markdown('<div style="height: 0.6rem;"></div>', unsafe_allow_html=True)
+            st.button("🚀 シフトを作成", type="primary", use_container_width=True, disabled=True)
+
     st.markdown('<div style="height: 1rem;"></div>', unsafe_allow_html=True)
-    
+
     # 進捗チェックリスト
     def get_step_style(done, in_progress=False):
         if done:
@@ -1894,22 +1976,22 @@ else:
                 "icon": str(1),
                 "text_color": "#94a3b8"
             }
-    
+
     # Step 1: スタッフ登録
     s1 = get_step_style(progress["staff"]["done"], progress["staff"]["count"] > 0 and not progress["staff"]["done"])
     s1["icon"] = "✓" if progress["staff"]["done"] else "1"
     staff_detail = f'{progress["staff"]["count"]}名登録済み' if progress["staff"]["count"] > 0 else 'スタッフを追加してください'
-    
+
     # Step 2: シフト設定
     s2 = get_step_style(progress["settings"]["done"])
     s2["icon"] = "✓" if progress["settings"]["done"] else "2"
-    
+
     # Step 3: 個人設定
     s3_in_progress = progress["personal"]["configured"] > 0 and not progress["personal"]["done"]
     s3 = get_step_style(progress["personal"]["done"], s3_in_progress)
     s3["icon"] = "✓" if progress["personal"]["done"] else "3"
     personal_detail = f'{progress["personal"]["configured"]}/{progress["personal"]["total"]}名設定済み' if progress["personal"]["total"] > 0 else '—'
-    
+
     st.markdown(f'''
 <div style="display: flex; flex-direction: column; gap: 0.75rem;">
 <div style="
@@ -1990,46 +2072,11 @@ else:
         flex-shrink: 0;
     ">{s3["icon"]}</div>
     <div style="flex: 1;">
-        <div style="color: {s3["text_color"]}; font-weight: 600; font-size: 0.95rem;">個人設定（任意）</div>
+        <!-- ✅ 修正点：「個人設定（任意）」→「個人設定」 -->
+        <div style="color: {s3["text_color"]}; font-weight: 600; font-size: 0.95rem;">個人設定</div>
         <div style="color: #64748b; font-size: 0.8rem;">{personal_detail}</div>
     </div>
     <div style="color: #64748b; font-size: 0.75rem;">サイドバー「個人設定」</div>
 </div>
 </div>
 ''', unsafe_allow_html=True)
-    
-    st.markdown('<div style="height: 1rem;"></div>', unsafe_allow_html=True)
-    
-    # アクションエリア
-    if progress["ready"]:
-        st.markdown('''
-<div style="
-    background: linear-gradient(135deg, #065f46 0%, #047857 100%);
-    border-radius: 12px;
-    padding: 1rem 1.5rem;
-    text-align: center;
-    border: 1px solid #10b981;
-">
-    <div style="color: #d1fae5; font-weight: 600; font-size: 0.95rem;">✨ 準備完了！</div>
-    <div style="color: #a7f3d0; font-size: 0.85rem; margin-top: 0.25rem;">サイドバー上部の「シフトを作成」ボタンをクリック</div>
-</div>
-''', unsafe_allow_html=True)
-    else:
-        st.markdown('''
-<div style="
-    background: rgba(100, 116, 139, 0.1);
-    border-radius: 12px;
-    padding: 1rem 1.5rem;
-    text-align: center;
-    border: 1px solid #475569;
-">
-    <div style="color: #94a3b8; font-size: 0.85rem;">上記のステップを完了すると、シフトを作成できます</div>
-</div>
-''', unsafe_allow_html=True)
-    
-    # ヘルプボタン
-    st.markdown('<div style="height: 0.75rem;"></div>', unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col2:
-        if st.button("📖 使い方ガイド", use_container_width=True):
-            show_help_dialog()
