@@ -704,10 +704,10 @@ with st.sidebar:
             missing_items.append("シフト設定")
         
         st.markdown(f'''
-        <div style="background: rgba(245, 158, 11, 0.1); border-radius: 8px; padding: 0.5rem 0.75rem; margin-top: 0.5rem; border-left: 3px solid #f59e0b;">
-            <span style="color: #fcd34d; font-size: 0.8rem;">⚠️ 不足: {" / ".join(missing_items)}</span>
-        </div>
-        ''', unsafe_allow_html=True)
+<div style="background: rgba(245, 158, 11, 0.1); border-radius: 8px; padding: 0.5rem 0.75rem; margin-top: 0.5rem; border-left: 3px solid #f59e0b;">
+    <span style="color: #fcd34d; font-size: 0.8rem;">⚠️ 不足: {" / ".join(missing_items)}</span>
+</div>
+''', unsafe_allow_html=True)
     
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
     
@@ -724,11 +724,11 @@ with st.sidebar:
     # --- シフト設定 ---
     settings_status = progress["settings"]
     st.markdown(f'''
-    <div class="sidebar-header">
-        <span style="color: {settings_status["color"]};">{settings_status["icon"]}</span> 
-        📅 シフト設定
-    </div>
-    ''', unsafe_allow_html=True)
+<div class="sidebar-header">
+    <span style="color: {settings_status["color"]};">{settings_status["icon"]}</span> 
+    📅 シフト設定
+</div>
+''', unsafe_allow_html=True)
 
     col_y, col_m = st.columns(2)
     with col_y: YEAR = st.number_input("年", 2025, 2030, key="input_year")
@@ -1475,11 +1475,11 @@ if st.session_state.get('shift_success', False):
     
     # サクセスメッセージ
     st.markdown(f"""
-    <div class="success-banner">
-        <span>🎉</span>
-        <div>シフト案を作成しました — {current_year}年{current_month}月</div>
-    </div>
-    """, unsafe_allow_html=True)
+<div class="success-banner">
+    <span>🎉</span>
+    <div>シフト案を作成しました — {current_year}年{current_month}月</div>
+</div>
+""", unsafe_allow_html=True)
     
     # 配置エラーがあれば表示
     if shift_errors:
@@ -1588,125 +1588,125 @@ if st.session_state.get('shift_success', False):
     
     # HTMLテーブル構築
     html_parts = ['''
-    <style>
-    .shift-table-container {
-        background: #1e293b;
-        border-radius: 16px;
-        padding: 1.5rem;
-        overflow-x: auto;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    }
-    .shift-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 3px;
-        font-family: 'Noto Sans JP', sans-serif;
-    }
-    .shift-table th {
-        background: #334155;
-        color: #e2e8f0;
-        padding: 10px 6px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-align: center;
-        border-radius: 6px;
-        white-space: nowrap;
-    }
-    .shift-table th.name-header {
-        background: linear-gradient(135deg, #4f46e5, #7c3aed);
-        color: white;
-        min-width: 80px;
-        position: sticky;
-        left: 0;
-        z-index: 10;
-    }
-    .shift-table th.weekend {
-        background: #475569;
-        color: #fbbf24;
-    }
-    .shift-table th.sunday {
-        background: #7f1d1d;
-        color: #fca5a5;
-    }
-    .shift-table td {
-        padding: 8px 4px;
-        text-align: center;
-        font-size: 0.85rem;
-        border-radius: 6px;
-        min-width: 38px;
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-    .shift-table td:hover {
-        transform: scale(1.1);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        z-index: 5;
-        position: relative;
-    }
-    .shift-table td.name-cell {
-        background: #1e293b;
-        color: #f1f5f9;
-        font-weight: 600;
-        text-align: left;
-        padding-left: 12px;
-        position: sticky;
-        left: 0;
-        z-index: 5;
-        min-width: 80px;
-        border-left: 3px solid #6366f1;
-    }
-    .shift-table td.summary-cell {
-        background: #475569;
-        color: #f1f5f9;
-        font-weight: 700;
-    }
-    .shift-table tr.total-row td {
-        background: #0f172a;
-        color: #94a3b8;
-        font-weight: 600;
-        border-top: 2px solid #475569;
-    }
-    .shift-table tr.total-row td.shortage {
-        background: #991b1b;
-        color: #fecaca;
-        font-weight: 700;
-    }
-    .shift-table tr.total-row td.name-cell {
-        background: #0f172a;
-        color: #94a3b8;
-        border-left: 3px solid #475569;
-    }
-    .legend-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-top: 1rem;
-        padding: 1rem;
-        background: #1e293b;
-        border-radius: 12px;
-    }
-    .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 0.8rem;
-        color: #cbd5e1;
-    }
-    .legend-badge {
-        width: 28px;
-        height: 22px;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-    </style>
-    <div class="shift-table-container">
-    <table class="shift-table">
-    <thead><tr>
-    <th class="name-header">スタッフ</th>
-    ''']
+<style>
+.shift-table-container {
+    background: #1e293b;
+    border-radius: 16px;
+    padding: 1.5rem;
+    overflow-x: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+.shift-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 3px;
+    font-family: 'Noto Sans JP', sans-serif;
+}
+.shift-table th {
+    background: #334155;
+    color: #e2e8f0;
+    padding: 10px 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+.shift-table th.name-header {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: white;
+    min-width: 80px;
+    position: sticky;
+    left: 0;
+    z-index: 10;
+}
+.shift-table th.weekend {
+    background: #475569;
+    color: #fbbf24;
+}
+.shift-table th.sunday {
+    background: #7f1d1d;
+    color: #fca5a5;
+}
+.shift-table td {
+    padding: 8px 4px;
+    text-align: center;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    min-width: 38px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.shift-table td:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 5;
+    position: relative;
+}
+.shift-table td.name-cell {
+    background: #1e293b;
+    color: #f1f5f9;
+    font-weight: 600;
+    text-align: left;
+    padding-left: 12px;
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    min-width: 80px;
+    border-left: 3px solid #6366f1;
+}
+.shift-table td.summary-cell {
+    background: #475569;
+    color: #f1f5f9;
+    font-weight: 700;
+}
+.shift-table tr.total-row td {
+    background: #0f172a;
+    color: #94a3b8;
+    font-weight: 600;
+    border-top: 2px solid #475569;
+}
+.shift-table tr.total-row td.shortage {
+    background: #991b1b;
+    color: #fecaca;
+    font-weight: 700;
+}
+.shift-table tr.total-row td.name-cell {
+    background: #0f172a;
+    color: #94a3b8;
+    border-left: 3px solid #475569;
+}
+.legend-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #1e293b;
+    border-radius: 12px;
+}
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: #cbd5e1;
+}
+.legend-badge {
+    width: 28px;
+    height: 22px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+</style>
+<div class="shift-table-container">
+<table class="shift-table">
+<thead><tr>
+<th class="name-header">スタッフ</th>
+''']
     
     # ヘッダー行（日付）
     for d in range(1, current_days + 1):
@@ -1800,18 +1800,18 @@ if st.session_state.get('shift_success', False):
     
     # 凡例
     html_parts.append('''
-    <div class="legend-container">
-        <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #fde047, #fef08a); color: #713f12;">早</div>早番</div>
-        <div class="legend-item"><div class="legend-badge" style="background: #f1f5f9; color: #334155;">日</div>日勤</div>
-        <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #fb923c, #fdba74); color: #7c2d12;">遅</div>遅番</div>
-        <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #818cf8, #a5b4fc); color: #1e1b4b;">夜</div>夜勤</div>
-        <div class="legend-item"><div class="legend-badge" style="background: #c7d2fe; color: #3730a3;">・</div>明け</div>
-        <div class="legend-item"><div class="legend-badge" style="background: #86efac; color: #166534;">◎</div>公休</div>
-        <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #67e8f9, #a5f3fc); color: #0e7490;">◎</div>希望休</div>
-        <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #f9a8d4, #fbcfe8); color: #9d174d;">有</div>有休</div>
-        <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #fdba74, #fed7aa); color: #9a3412;">リ</div>リフレッシュ休暇</div>
-    </div>
-    ''')
+<div class="legend-container">
+    <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #fde047, #fef08a); color: #713f12;">早</div>早番</div>
+    <div class="legend-item"><div class="legend-badge" style="background: #f1f5f9; color: #334155;">日</div>日勤</div>
+    <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #fb923c, #fdba74); color: #7c2d12;">遅</div>遅番</div>
+    <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #818cf8, #a5b4fc); color: #1e1b4b;">夜</div>夜勤</div>
+    <div class="legend-item"><div class="legend-badge" style="background: #c7d2fe; color: #3730a3;">・</div>明け</div>
+    <div class="legend-item"><div class="legend-badge" style="background: #86efac; color: #166534;">◎</div>公休</div>
+    <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #67e8f9, #a5f3fc); color: #0e7490;">◎</div>希望休</div>
+    <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #f9a8d4, #fbcfe8); color: #9d174d;">有</div>有休</div>
+    <div class="legend-item"><div class="legend-badge" style="background: linear-gradient(135deg, #fdba74, #fed7aa); color: #9a3412;">リ</div>リフレッシュ休暇</div>
+</div>
+''')
     
     st.markdown(''.join(html_parts), unsafe_allow_html=True)
     
@@ -1850,21 +1850,21 @@ else:
     
     # ヘッダー
     st.markdown("""
-    <div style="
-        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-        border-radius: 16px;
-        padding: 1.5rem 2rem;
-        text-align: center;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.25);
-        margin-top: 0.5rem;
-        border: 1px solid #475569;
-    ">
-        <h2 style="color: #f1f5f9; font-weight: 600; margin: 0; font-size: 1.2rem;">シフトを作成しましょう</h2>
-        <p style="color: #94a3b8; font-size: 0.85rem; margin: 0.5rem 0 0 0;">
-            サイドバーの設定を完了すると、シフトを自動作成できます
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+<div style="
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border-radius: 16px;
+    padding: 1.5rem 2rem;
+    text-align: center;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    margin-top: 0.5rem;
+    border: 1px solid #475569;
+">
+    <h2 style="color: #f1f5f9; font-weight: 600; margin: 0; font-size: 1.2rem;">シフトを作成しましょう</h2>
+    <p style="color: #94a3b8; font-size: 0.85rem; margin: 0.5rem 0 0 0;">
+        サイドバーの設定を完了すると、シフトを自動作成できます
+    </p>
+</div>
+""", unsafe_allow_html=True)
     
     st.markdown('<div style="height: 1rem;"></div>', unsafe_allow_html=True)
     
@@ -1911,124 +1911,121 @@ else:
     personal_detail = f'{progress["personal"]["configured"]}/{progress["personal"]["total"]}名設定済み' if progress["personal"]["total"] > 0 else '—'
     
     st.markdown(f'''
-    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-        <!-- Step 1 -->
-        <div style="
-            background: {s1["bg"]};
-            border-radius: 12px;
-            padding: 1rem 1.25rem;
-            border-left: 4px solid {s1["border"]};
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        ">
-            <div style="
-                width: 32px; height: 32px;
-                background: {s1["icon_bg"]};
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 700;
-                font-size: 0.9rem;
-                color: white;
-                flex-shrink: 0;
-            ">{s1["icon"]}</div>
-            <div style="flex: 1;">
-                <div style="color: {s1["text_color"]}; font-weight: 600; font-size: 0.95rem;">スタッフを登録</div>
-                <div style="color: #64748b; font-size: 0.8rem;">{staff_detail}</div>
-            </div>
-            <div style="color: #64748b; font-size: 0.75rem;">サイドバー「スタッフ管理」</div>
-        </div>
-        
-        <!-- Step 2 -->
-        <div style="
-            background: {s2["bg"]};
-            border-radius: 12px;
-            padding: 1rem 1.25rem;
-            border-left: 4px solid {s2["border"]};
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        ">
-            <div style="
-                width: 32px; height: 32px;
-                background: {s2["icon_bg"]};
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 700;
-                font-size: 0.9rem;
-                color: white;
-                flex-shrink: 0;
-            ">{s2["icon"]}</div>
-            <div style="flex: 1;">
-                <div style="color: {s2["text_color"]}; font-weight: 600; font-size: 0.95rem;">シフト設定</div>
-                <div style="color: #64748b; font-size: 0.8rem;">対象年月・公休数を設定</div>
-            </div>
-            <div style="color: #64748b; font-size: 0.75rem;">サイドバー「シフト設定」</div>
-        </div>
-        
-        <!-- Step 3 -->
-        <div style="
-            background: {s3["bg"]};
-            border-radius: 12px;
-            padding: 1rem 1.25rem;
-            border-left: 4px solid {s3["border"]};
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        ">
-            <div style="
-                width: 32px; height: 32px;
-                background: {s3["icon_bg"]};
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 700;
-                font-size: 0.9rem;
-                color: white;
-                flex-shrink: 0;
-            ">{s3["icon"]}</div>
-            <div style="flex: 1;">
-                <div style="color: {s3["text_color"]}; font-weight: 600; font-size: 0.95rem;">個人設定（任意）</div>
-                <div style="color: #64748b; font-size: 0.8rem;">{personal_detail}</div>
-            </div>
-            <div style="color: #64748b; font-size: 0.75rem;">サイドバー「個人設定」</div>
-        </div>
+<div style="display: flex; flex-direction: column; gap: 0.75rem;">
+<div style="
+    background: {s1["bg"]};
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    border-left: 4px solid {s1["border"]};
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+">
+    <div style="
+        width: 32px; height: 32px;
+        background: {s1["icon_bg"]};
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: white;
+        flex-shrink: 0;
+    ">{s1["icon"]}</div>
+    <div style="flex: 1;">
+        <div style="color: {s1["text_color"]}; font-weight: 600; font-size: 0.95rem;">スタッフを登録</div>
+        <div style="color: #64748b; font-size: 0.8rem;">{staff_detail}</div>
     </div>
-    ''', unsafe_allow_html=True)
+    <div style="color: #64748b; font-size: 0.75rem;">サイドバー「スタッフ管理」</div>
+</div>
+
+<div style="
+    background: {s2["bg"]};
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    border-left: 4px solid {s2["border"]};
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+">
+    <div style="
+        width: 32px; height: 32px;
+        background: {s2["icon_bg"]};
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: white;
+        flex-shrink: 0;
+    ">{s2["icon"]}</div>
+    <div style="flex: 1;">
+        <div style="color: {s2["text_color"]}; font-weight: 600; font-size: 0.95rem;">シフト設定</div>
+        <div style="color: #64748b; font-size: 0.8rem;">対象年月・公休数を設定</div>
+    </div>
+    <div style="color: #64748b; font-size: 0.75rem;">サイドバー「シフト設定」</div>
+</div>
+
+<div style="
+    background: {s3["bg"]};
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    border-left: 4px solid {s3["border"]};
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+">
+    <div style="
+        width: 32px; height: 32px;
+        background: {s3["icon_bg"]};
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: white;
+        flex-shrink: 0;
+    ">{s3["icon"]}</div>
+    <div style="flex: 1;">
+        <div style="color: {s3["text_color"]}; font-weight: 600; font-size: 0.95rem;">個人設定（任意）</div>
+        <div style="color: #64748b; font-size: 0.8rem;">{personal_detail}</div>
+    </div>
+    <div style="color: #64748b; font-size: 0.75rem;">サイドバー「個人設定」</div>
+</div>
+</div>
+''', unsafe_allow_html=True)
     
     st.markdown('<div style="height: 1rem;"></div>', unsafe_allow_html=True)
     
     # アクションエリア
     if progress["ready"]:
         st.markdown('''
-        <div style="
-            background: linear-gradient(135deg, #065f46 0%, #047857 100%);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            text-align: center;
-            border: 1px solid #10b981;
-        ">
-            <div style="color: #d1fae5; font-weight: 600; font-size: 0.95rem;">✨ 準備完了！</div>
-            <div style="color: #a7f3d0; font-size: 0.85rem; margin-top: 0.25rem;">サイドバー上部の「シフトを作成」ボタンをクリック</div>
-        </div>
-        ''', unsafe_allow_html=True)
+<div style="
+    background: linear-gradient(135deg, #065f46 0%, #047857 100%);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    text-align: center;
+    border: 1px solid #10b981;
+">
+    <div style="color: #d1fae5; font-weight: 600; font-size: 0.95rem;">✨ 準備完了！</div>
+    <div style="color: #a7f3d0; font-size: 0.85rem; margin-top: 0.25rem;">サイドバー上部の「シフトを作成」ボタンをクリック</div>
+</div>
+''', unsafe_allow_html=True)
     else:
         st.markdown('''
-        <div style="
-            background: rgba(100, 116, 139, 0.1);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            text-align: center;
-            border: 1px solid #475569;
-        ">
-            <div style="color: #94a3b8; font-size: 0.85rem;">上記のステップを完了すると、シフトを作成できます</div>
-        </div>
-        ''', unsafe_allow_html=True)
+<div style="
+    background: rgba(100, 116, 139, 0.1);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    text-align: center;
+    border: 1px solid #475569;
+">
+    <div style="color: #94a3b8; font-size: 0.85rem;">上記のステップを完了すると、シフトを作成できます</div>
+</div>
+''', unsafe_allow_html=True)
     
     # ヘルプボタン
     st.markdown('<div style="height: 0.75rem;"></div>', unsafe_allow_html=True)
