@@ -880,7 +880,7 @@ def solve_shift(staff_data):
         return False
 
     def check_rules(name, day_idx, current_sched, shift_type):
-        """シフトルールをチェック"""
+        """シフトルールをチェック（前後両方向）"""
         staff_info = next(s for s in staff_data if s["name"] == name)
         shift_clean = shift_type.strip()
         prev = get_prev_shift(name, day_idx, current_sched)
@@ -889,10 +889,17 @@ def solve_shift(staff_data):
         if prev == "・" and shift_clean != "◎":
             return False
 
-        # ルール2: 逆行禁止
+        # ルール2a: 前日との逆行禁止
         if shift_clean in ["早", "日", "遅"]:
             if check_reverse(prev, shift_clean):
                 return False
+
+        # ルール2b: 翌日との逆行禁止（翌日が既に決まっている場合）
+        if day_idx + 1 < DAYS:
+            next_shift = current_sched[name][day_idx + 1].strip()
+            if next_shift in ["早", "日", "遅"]:
+                if check_reverse(shift_clean, next_shift):
+                    return False
 
         # 休みタイプはここまででOK
         if shift_clean in ["◎", "有", "リ休"]:
@@ -902,24 +909,80 @@ def solve_shift(staff_data):
         if shift_clean == "・" and prev != "夜":
             return False
 
-        # ルール3: 連勤チェック
-        streak = count_consecutive_work(name, day_idx, current_sched)
+        # ルール3: 連勤チェック（前後両方向）
+        # 前方向の連勤
+        streak_before = count_consecutive_work(name, day_idx, current_sched)
         
+        # 後方向の連勤（翌日以降で既に勤務が入っている場合）
+        streak_after = 0
+        d = day_idx + 1
+        while d < DAYS:
+            val = current_sched[name][d].strip()
+            if is_work_shift(val):
+                streak_after += 1
+                d += 1
+            else:
+                break
+
         # 夜勤は翌日の明けと合わせて2日分
         if shift_clean == "夜":
-            new_streak = streak + 2
+            current_add = 2
         else:
-            new_streak = streak + 1
+            current_add = 1
 
-        # 6連勤以上は禁止
-        if new_streak > 5:
+        total_streak = streak_before + current_add + streak_after
+
+        # 6連勤以上は禁止（5連勤まで）
+        if total_streak > 5:
             return False
 
-        # ルール4: 常勤の5連勤には夜勤を含める
+        # ルール4: 常勤の日勤帯のみ連勤は4連勤まで
         if staff_info["type"] == 0 and shift_clean in ["早", "日", "遅"]:
-            if new_streak >= 5:
-                if not has_night_in_streak(name, day_idx, current_sched):
-                    return False
+            # 前後の連勤中に夜勤があるかチェック
+            has_night = has_night_in_streak(name, day_idx, current_sched)
+            
+            # 後方向に夜勤があるかもチェック
+            d = day_idx + 1
+            while d < DAYS:
+                val = current_sched[name][d].strip()
+                if is_work_shift(val):
+                    if val in ["夜", "・"]:
+                        has_night = True
+                        break
+                    d += 1
+                else:
+                    break
+            
+            # 日勤帯のみの連勤数をカウント
+            day_streak = 0
+            # 前方向
+            d = day_idx - 1
+            while d >= 0:
+                val = current_sched[name][d].strip()
+                if val in ["早", "日", "遅"]:
+                    day_streak += 1
+                    d -= 1
+                elif val in ["夜", "・"]:
+                    break  # 夜勤系があれば連勤は別カウント
+                else:
+                    break
+            # 今回の追加
+            day_streak += 1
+            # 後方向
+            d = day_idx + 1
+            while d < DAYS:
+                val = current_sched[name][d].strip()
+                if val in ["早", "日", "遅"]:
+                    day_streak += 1
+                    d += 1
+                elif val in ["夜", "・"]:
+                    break
+                else:
+                    break
+            
+            # 日勤帯のみで5連勤以上は禁止（夜勤を含まない場合）
+            if day_streak >= 5 and not has_night:
+                return False
 
         return True
 
@@ -1145,67 +1208,63 @@ def solve_shift(staff_data):
                 late_cnt = count_day_staff(schedule, d, ["遅"])
                 day_total = count_day_staff(schedule, d, ["早", "日", "遅"])
 
-                # 早番不足: 公休を日勤→早番に変更、または日勤を早番に
+                # 早番不足: 日勤者を早番に変更
                 if early_cnt == 0:
-                    # 日勤者を早番に変更
                     for s in regulars:
                         name = s["name"]
                         if schedule[name][d] == "日":
+                            # 一時的に空にしてcheck_rulesでチェック
+                            schedule[name][d] = ""
                             if check_rules(name, d, schedule, "早"):
-                                # 翌日チェック
-                                if d + 1 < DAYS:
-                                    next_v = schedule[name][d+1].strip()
-                                    if next_v in ["早", "日", "遅", "夜", "◎", "有", "リ休", "・", ""]:
-                                        if not check_reverse("早", next_v):
-                                            schedule[name][d] = "早"
-                                            improved = True
-                                            break
-                                else:
-                                    schedule[name][d] = "早"
-                                    improved = True
-                                    break
+                                schedule[name][d] = "早"
+                                improved = True
+                                break
+                            else:
+                                schedule[name][d] = "日"  # 元に戻す
 
-                # 遅番不足
+                # 遅番不足: 日勤者を遅番に変更
                 if late_cnt == 0:
                     for s in regulars:
                         name = s["name"]
                         if schedule[name][d] == "日":
+                            schedule[name][d] = ""
                             if check_rules(name, d, schedule, "遅"):
                                 schedule[name][d] = "遅"
                                 improved = True
                                 break
+                            else:
+                                schedule[name][d] = "日"
 
                 # 日勤帯不足 & 不要な公休がある場合
                 if day_total < 3:
                     fixed_off_cnt = count_required_off(d, schedule)
                     total_staff = len(regulars)
-                    # 必要な休み: 夜勤者1 + 明け1 + 固定休み
                     night_cnt = count_day_staff(schedule, d, ["夜"])
                     ake_cnt = count_day_staff(schedule, d, ["・"])
                     min_off = night_cnt + ake_cnt + fixed_off_cnt
                     max_day_possible = total_staff - min_off
 
                     if max_day_possible >= 3 and day_total < 3:
-                        # 公休を別の日に移動できるか試す
                         for s in regulars:
                             name = s["name"]
-                            if schedule[name][d] == "◎":  # 通常公休（希望休でない）
-                                # 他の日に公休を移動
-                                other_days = [od for od in range(DAYS) 
-                                             if od != d and schedule[name][od] == ""]
-                                # 人員に余裕がある日を探す
-                                for od in other_days:
-                                    od_total = count_day_staff(schedule, od, ["早", "日", "遅"])
-                                    if od_total >= 3:
-                                        # 移動可能
-                                        schedule[name][od] = "◎"
-                                        # 元の日を日勤に
-                                        if check_rules(name, d, schedule, "日"):
-                                            schedule[name][d] = "日"
-                                            improved = True
-                                            break
-                                if improved:
-                                    break
+                            if schedule[name][d] == "◎":
+                                # 他の余裕日を探す
+                                other_days = []
+                                for od in range(DAYS):
+                                    if od != d and schedule[name][od] == "◎":
+                                        od_total = count_day_staff(schedule, od, ["早", "日", "遅"])
+                                        if od_total >= 3:
+                                            other_days.append(od)
+                                
+                                if other_days:
+                                    # 元の日を日勤に変更可能かチェック
+                                    schedule[name][d] = ""
+                                    if check_rules(name, d, schedule, "日"):
+                                        schedule[name][d] = "日"
+                                        improved = True
+                                        break
+                                    else:
+                                        schedule[name][d] = "◎"
                         if improved:
                             continue
 
@@ -1224,20 +1283,24 @@ def solve_shift(staff_data):
                 early_staff = [s for s in staff_data if schedule[s["name"]][d] == "早" and s["type"] == 0]
                 for s in early_staff[1:]:
                     name = s["name"]
-                    # 翌日逆行チェック
-                    if d + 1 < DAYS:
-                        next_v = schedule[name][d+1].strip()
-                        if next_v == "早":
-                            continue  # 日→早は逆行
-                    schedule[name][d] = "日"
-                    break
+                    schedule[name][d] = ""
+                    if check_rules(name, d, schedule, "日"):
+                        schedule[name][d] = "日"
+                        break
+                    else:
+                        schedule[name][d] = "早"
 
             # 遅番2名以上 → 1名を日勤に
             if late_cnt > 1:
                 late_staff = [s for s in staff_data if schedule[s["name"]][d] == "遅" and s["type"] == 0]
                 for s in late_staff[1:]:
-                    schedule[s["name"]][d] = "日"
-                    break
+                    name = s["name"]
+                    schedule[name][d] = ""
+                    if check_rules(name, d, schedule, "日"):
+                        schedule[name][d] = "日"
+                        break
+                    else:
+                        schedule[name][d] = "遅"
 
         # ========================================
         # スコアリング
