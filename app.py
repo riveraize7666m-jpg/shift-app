@@ -1974,7 +1974,8 @@ else:
             margin-top: 0.5rem;
             border: 1px solid #10b981;
         ">
-            <h2 style="color: #d1fae5; font-weight: 600; margin: 0; font-size: 1.3rem;">✨ 準備完了！</h2>
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">✨</div>
+            <h2 style="color: #d1fae5; font-weight: 600; margin: 0; font-size: 1.3rem;">準備完了！</h2>
             <p style="color: #a7f3d0; font-size: 0.9rem; margin: 0.5rem 0 0 0;">
                 下のボタンをクリックしてシフトを作成
             </p>
