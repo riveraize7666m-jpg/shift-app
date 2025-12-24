@@ -731,7 +731,30 @@ def get_progress_status():
 progress = get_progress_status()
 
 with st.sidebar:
+    # --- シフト設定（最初に設定する基本情報）---
+    settings_status = progress["settings"]
+    st.markdown(f'''
+    <div class="sidebar-header">
+        <span style="color: {settings_status["color"]};">{settings_status["icon"]}</span> 
+        📅 シフト設定
+    </div>
+    ''', unsafe_allow_html=True)
+
+    col_y, col_m = st.columns(2)
+    with col_y: YEAR = st.number_input("年", min_value=2025, max_value=2030, key="input_year")
+    with col_m: MONTH = st.number_input("月", min_value=1, max_value=12, key="input_month")
+
+    _, DAYS = calendar.monthrange(YEAR, MONTH)
+    
+    # keyを指定するとsession_stateの値が自動的に使われる
+    TARGET_OFF_DAYS = st.number_input("常勤の公休数", min_value=1, max_value=15, key="target_off", help="目標となる公休日数を設定")
+    
+    st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+    
     # --- メインCTAボタン（状態に応じて変化）---
+    # 進捗状況を再計算（シフト設定が確定した後）
+    progress = get_progress_status()
+    
     if not progress["staff"]["done"]:
         btn_label = "👥 まずスタッフを登録"
         btn_disabled = True
@@ -764,26 +787,6 @@ with st.sidebar:
             <span style="color: #fcd34d; font-size: 0.8rem;">⚠️ 不足: {" / ".join(missing_items)}</span>
         </div>
         ''', unsafe_allow_html=True)
-    
-    st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
-    
-    # --- シフト設定（最初に設定する基本情報）---
-    settings_status = progress["settings"]
-    st.markdown(f'''
-    <div class="sidebar-header">
-        <span style="color: {settings_status["color"]};">{settings_status["icon"]}</span> 
-        📅 シフト設定
-    </div>
-    ''', unsafe_allow_html=True)
-
-    col_y, col_m = st.columns(2)
-    with col_y: YEAR = st.number_input("年", min_value=2025, max_value=2030, key="input_year")
-    with col_m: MONTH = st.number_input("月", min_value=1, max_value=12, key="input_month")
-
-    _, DAYS = calendar.monthrange(YEAR, MONTH)
-    
-    # keyを指定するとsession_stateの値が自動的に使われる
-    TARGET_OFF_DAYS = st.number_input("常勤の公休数", min_value=1, max_value=15, key="target_off", help="目標となる公休日数を設定")
     
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
