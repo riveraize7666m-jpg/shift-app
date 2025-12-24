@@ -782,9 +782,8 @@ with st.sidebar:
 
     _, DAYS = calendar.monthrange(YEAR, MONTH)
     
-    # セッション状態の値を明示的に使用
-    current_target_off = st.session_state.get('target_off', 9)
-    TARGET_OFF_DAYS = st.number_input("常勤の公休数", min_value=1, max_value=15, value=current_target_off, key="target_off", help="目標となる公休日数を設定")
+    # keyを指定するとsession_stateの値が自動的に使われる
+    TARGET_OFF_DAYS = st.number_input("常勤の公休数", min_value=1, max_value=15, key="target_off", help="目標となる公休日数を設定")
     
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
