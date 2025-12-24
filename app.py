@@ -636,6 +636,10 @@ def show_help_dialog():
     - 常勤スタッフが早・日・遅だけで5連勤することは禁止
     - 夜勤を含む場合はこの制限は適用されません
     
+    **2連休の確保**
+    - 各スタッフに**最低1回の2連休**を設定
+    - 連休は◎+◎、◎+有、◎+リ休など、休みが2日連続すればOK
+    
     **必須配置**
     - 毎日、早番・遅番・夜勤を最低1名ずつ配置
     - 日勤帯（早・日・遅）は合計3名以上を目標
@@ -649,6 +653,7 @@ def show_help_dialog():
     - 🔴 **夜勤者なし** - その日の夜勤担当がいません
     - ⚠️ **日勤帯不足** - 日勤帯（早・日・遅）のスタッフが3名未満です
     - ℹ️ **目標未達** - 公休数や夜勤回数が目標と異なります
+    - ℹ️ **2連休なし** - 2連休が確保できないスタッフがいます
     
     ---
     
@@ -1508,6 +1513,87 @@ def solve_shift(staff_data):
                         schedule[name][d] = "遅"
 
         # ========================================
+        # Phase 9: 2連休の確保（各スタッフ最低1回）
+        # ========================================
+        def is_off_shift(val):
+            """休みシフトかどうか（◎、有、リ休）"""
+            v = val.strip() if val else ""
+            return v in ["◎", "有", "リ休"] or v == "◎ "
+        
+        def has_consecutive_off(name, sched):
+            """2連休以上があるかチェック"""
+            shifts = sched[name]
+            for d in range(len(shifts) - 1):
+                if is_off_shift(shifts[d]) and is_off_shift(shifts[d+1]):
+                    return True
+            return False
+        
+        for s in regulars:
+            name = s["name"]
+            if has_consecutive_off(name, schedule):
+                continue  # 既に2連休がある
+            
+            # 2連休がない場合、公休を連続させる
+            off_days = [d for d in range(DAYS) if schedule[name][d].strip() == "◎"]
+            
+            if len(off_days) < 2:
+                continue  # 公休が1日以下なら対応不可
+            
+            # 連続させられる場所を探す
+            best_pair = None
+            best_score = -9999
+            
+            for i, d1 in enumerate(off_days):
+                # d1の翌日が空きまたは日勤なら、そこを公休にできるか試す
+                if d1 + 1 < DAYS and schedule[name][d1+1] not in ["夜", "・", "◎ ", "有", "リ休"]:
+                    target_d = d1 + 1
+                    original = schedule[name][target_d]
+                    # その日の人員状況をチェック
+                    day_cnt = count_day_staff(schedule, target_d, ["早", "日", "遅"])
+                    if day_cnt >= 4 or original == "":  # 余裕がある場合のみ
+                        score = day_cnt
+                        if score > best_score:
+                            best_score = score
+                            best_pair = (d1, target_d, original)
+                
+                # d1の前日が空きまたは日勤なら、そこを公休にできるか試す
+                if d1 - 1 >= 0 and schedule[name][d1-1] not in ["夜", "・", "◎ ", "有", "リ休"]:
+                    target_d = d1 - 1
+                    original = schedule[name][target_d]
+                    day_cnt = count_day_staff(schedule, target_d, ["早", "日", "遅"])
+                    if day_cnt >= 4 or original == "":
+                        score = day_cnt
+                        if score > best_score:
+                            best_score = score
+                            best_pair = (d1, target_d, original)
+            
+            # 最適なペアが見つかった場合、公休を移動
+            if best_pair:
+                d1, target_d, original = best_pair
+                if original in ["日", "早", "遅"]:
+                    # 元の公休を別の日に移動する必要がある
+                    # 他の公休日から1日を勤務日に変更
+                    other_offs = [d for d in off_days if d != d1 and d != target_d]
+                    moved = False
+                    for od in other_offs:
+                        day_cnt = count_day_staff(schedule, od, ["早", "日", "遅"])
+                        if day_cnt < 3:  # 人員不足の日を優先
+                            schedule[name][od] = ""
+                            if check_rules(name, od, schedule, "日"):
+                                schedule[name][od] = "日"
+                                schedule[name][target_d] = "◎"
+                                moved = True
+                                break
+                            else:
+                                schedule[name][od] = "◎"
+                    if not moved:
+                        # 移動できなかった場合は単純に連続させる
+                        schedule[name][target_d] = "◎"
+                else:
+                    # 空き日をそのまま公休に
+                    schedule[name][target_d] = "◎"
+
+        # ========================================
         # スコアリング
         # ========================================
         score = 0
@@ -1527,6 +1613,10 @@ def solve_shift(staff_data):
         late_missing = sum(1 for d in range(DAYS) if count_day_staff(schedule, d, ["遅"]) == 0)
         night_missing = sum(1 for d in range(DAYS) if count_day_staff(schedule, d, ["夜"]) == 0)
         day_shortage = sum(1 for d in range(DAYS) if count_day_staff(schedule, d, ["早", "日", "遅"]) < 3)
+        
+        # 2連休なしのペナルティ
+        no_consecutive_off = sum(1 for s in regulars if not has_consecutive_off(s["name"], schedule))
+        score -= no_consecutive_off * 200
 
         score -= early_missing * 300
         score -= late_missing * 300
@@ -1537,10 +1627,22 @@ def solve_shift(staff_data):
             best_score = score
             best_schedule = copy.deepcopy(schedule)
 
-        if early_missing == 0 and late_missing == 0 and night_missing == 0 and day_shortage == 0 and score > -100:
+        if early_missing == 0 and late_missing == 0 and night_missing == 0 and day_shortage == 0 and no_consecutive_off == 0 and score > -100:
             break
 
     my_bar.progress(100, text="✓ 完了しました")
+
+    # 2連休判定用の関数（エラー収集用）
+    def is_off_shift_final(val):
+        v = val.strip() if val else ""
+        return v in ["◎", "有", "リ休"] or v == "◎ "
+    
+    def has_consecutive_off_final(name, sched):
+        shifts = sched[name]
+        for d in range(len(shifts) - 1):
+            if is_off_shift_final(shifts[d]) and is_off_shift_final(shifts[d+1]):
+                return True
+        return False
 
     # エラー収集
     if best_schedule:
@@ -1551,6 +1653,11 @@ def solve_shift(staff_data):
                 errors.append(f"{d+1}日: 遅番を配置できませんでした")
             if not any(best_schedule[s["name"]][d] == "夜" for s in staff_data):
                 errors.append(f"{d+1}日: 夜勤を配置できませんでした")
+        
+        # 2連休なしの警告
+        for s in [st for st in staff_data if st["type"] == 0]:
+            if not has_consecutive_off_final(s["name"], best_schedule):
+                errors.append(f"{s['name']}: 2連休が確保できませんでした")
 
     return best_schedule, errors
 
@@ -1974,8 +2081,7 @@ else:
             margin-top: 0.5rem;
             border: 1px solid #10b981;
         ">
-            <div style="font-size: 2rem; margin-bottom: 0.5rem;">✨</div>
-            <h2 style="color: #d1fae5; font-weight: 600; margin: 0; font-size: 1.3rem;">準備完了！</h2>
+            <h2 style="color: #d1fae5; font-weight: 600; margin: 0; font-size: 1.3rem;">✨ 準備完了！</h2>
             <p style="color: #a7f3d0; font-size: 0.9rem; margin: 0.5rem 0 0 0;">
                 下のボタンをクリックしてシフトを作成
             </p>
