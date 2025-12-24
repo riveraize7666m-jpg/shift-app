@@ -696,10 +696,9 @@ with st.sidebar:
     
     col_btn1, col_btn2 = st.columns([3, 1])
     with col_btn1:
-        if st.button(btn_label, type="primary", use_container_width=True, disabled=btn_disabled):
+        if st.button(btn_label, type="primary", use_container_width=True, disabled=btn_disabled, key="sidebar_create_btn"):
             st.session_state.run_solver = True
-        else:
-            st.session_state.run_solver = False
+            st.rerun()
     with col_btn2:
         if st.button("❓", use_container_width=True):
             show_help_dialog()
@@ -720,17 +719,7 @@ with st.sidebar:
     
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
     
-    # --- 設定ファイル ---
-    st.markdown(f'<div class="sidebar-header">📂 設定ファイル <span style="font-size: 0.75rem; color: #64748b;">(任意)</span></div>', unsafe_allow_html=True)
-    st.markdown('<p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 0.5rem;">過去の設定を復元できます</p>', unsafe_allow_html=True)
-    st.file_uploader("設定ファイル", type=["json"], key="setting_file_uploader", on_change=load_settings_callback, label_visibility="collapsed")
-    if st.session_state.get("load_success_flag", False):
-        st.success("✓ 復元完了")
-        st.session_state.load_success_flag = False
-    
-    st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
-    
-    # --- シフト設定 ---
+    # --- シフト設定（最初に設定する基本情報）---
     settings_status = progress["settings"]
     st.markdown(f'''
     <div class="sidebar-header">
@@ -750,7 +739,43 @@ with st.sidebar:
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
 # ==========================================
-# 5. 各スタッフ詳細設定
+# 5. スタッフ管理（スタッフを追加）
+# ==========================================
+staff_status = progress["staff"]
+staff_label = f'<span style="font-size: 0.75rem; color: #94a3b8;">({staff_status["count"]}名)</span>' if staff_status["count"] > 0 else ''
+st.sidebar.markdown(f'''
+<div class="sidebar-header">
+    <span style="color: {staff_status["color"]};">{staff_status["icon"]}</span> 
+    👥 スタッフ管理 {staff_label}
+</div>
+''', unsafe_allow_html=True)
+
+with st.sidebar.form("add_staff_form", clear_on_submit=True):
+    new_name = st.text_input("名前", placeholder="新しいスタッフ名")
+    new_type = st.selectbox("属性", ["常勤", "パート(日勤のみ)", "パート(早番のみ)"], index=0)
+    submitted = st.form_submit_button("➕ スタッフを追加", type="primary")
+    
+    if submitted and new_name:
+        type_code = 0
+        if new_type == "パート(日勤のみ)": type_code = 1
+        elif new_type == "パート(早番のみ)": type_code = 2
+        
+        st.session_state.staff_list.append({"name": new_name, "type": type_code})
+        st.success(f"✓ {new_name}さんを追加しました")
+        st.rerun()
+
+if st.session_state.staff_list:
+    del_name = st.sidebar.selectbox("削除対象", [s["name"] for s in st.session_state.staff_list], key="del_select")
+    if st.sidebar.button("🗑️ このスタッフを削除", use_container_width=True):
+        st.session_state.staff_list = [s for s in st.session_state.staff_list if s["name"] != del_name]
+        st.session_state.shift_result = None
+        st.session_state.shift_success = False
+        st.rerun()
+
+st.sidebar.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+
+# ==========================================
+# 6. 各スタッフ詳細設定
 # ==========================================
 personal_status = progress["personal"]
 if personal_status["total"] > 0:
@@ -805,18 +830,23 @@ for idx, staff in enumerate(st.session_state.staff_list):
         key_f1, key_f2, key_f3 = f"f1_{name}", f"f2_{name}", f"f3_{name}"
         open_fix_key = f"open_fix_{name}"
         
-        # チェックボックスの状態を取得（まだ存在しない場合はFalse）
-        is_fixed_open = st.session_state.get(open_fix_key, False)
+        # 初期化
+        if key_f1 not in st.session_state: st.session_state[key_f1] = ""
+        if key_f2 not in st.session_state: st.session_state[key_f2] = ""
+        if key_f3 not in st.session_state: st.session_state[key_f3] = ""
         
         if st.checkbox("年始固定シフト", key=open_fix_key):
-            fix_opts = [""] + SHIFT_OPTIONS
-            if key_f1 not in st.session_state: st.session_state[key_f1] = ""
-            if key_f2 not in st.session_state: st.session_state[key_f2] = ""
-            if key_f3 not in st.session_state: st.session_state[key_f3] = ""
+            fix_opts = ["", "早", "日", "遅", "夜", "・", "◎", "有", "リ休"]
             cols = st.columns(3)
-            with cols[0]: st.selectbox("1日", fix_opts, key=key_f1)
-            with cols[1]: st.selectbox("2日", fix_opts, key=key_f2)
-            with cols[2]: st.selectbox("3日", fix_opts, key=key_f3)
+            with cols[0]: 
+                idx1 = fix_opts.index(st.session_state[key_f1]) if st.session_state[key_f1] in fix_opts else 0
+                st.selectbox("1日", fix_opts, index=idx1, key=key_f1)
+            with cols[1]: 
+                idx2 = fix_opts.index(st.session_state[key_f2]) if st.session_state[key_f2] in fix_opts else 0
+                st.selectbox("2日", fix_opts, index=idx2, key=key_f2)
+            with cols[2]: 
+                idx3 = fix_opts.index(st.session_state[key_f3]) if st.session_state[key_f3] in fix_opts else 0
+                st.selectbox("3日", fix_opts, index=idx3, key=key_f3)
         
         # チェックボックスがチェックされている場合のみ、セッション状態から値を取得
         if st.session_state.get(open_fix_key, False):
@@ -865,43 +895,20 @@ for idx, staff in enumerate(st.session_state.staff_list):
     })
 
 # ==========================================
-# 6. スタッフ管理（個人設定の下）
+# 7. 設定ファイル（読み込み・保存）
 # ==========================================
 st.sidebar.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
-staff_status = progress["staff"]
-staff_label = f'<span style="font-size: 0.75rem; color: #94a3b8;">({staff_status["count"]}名)</span>' if staff_status["count"] > 0 else ''
-st.sidebar.markdown(f'''
-<div class="sidebar-header">
-    <span style="color: {staff_status["color"]};">{staff_status["icon"]}</span> 
-    👥 スタッフ管理 {staff_label}
-</div>
-''', unsafe_allow_html=True)
+st.sidebar.markdown('<div class="sidebar-header">💾 設定の保存・読込</div>', unsafe_allow_html=True)
 
-with st.sidebar.form("add_staff_form", clear_on_submit=True):
-    new_name = st.text_input("名前", placeholder="新しいスタッフ名")
-    new_type = st.selectbox("属性", ["常勤", "パート(日勤のみ)", "パート(早番のみ)"], index=0)
-    submitted = st.form_submit_button("➕ スタッフを追加", type="primary")
-    
-    if submitted and new_name:
-        type_code = 0
-        if new_type == "パート(日勤のみ)": type_code = 1
-        elif new_type == "パート(早番のみ)": type_code = 2
-        
-        st.session_state.staff_list.append({"name": new_name, "type": type_code})
-        st.success(f"✓ {new_name}さんを追加しました")
-        st.rerun()
-
-if st.session_state.staff_list:
-    del_name = st.sidebar.selectbox("削除対象", [s["name"] for s in st.session_state.staff_list], key="del_select")
-    if st.sidebar.button("🗑️ このスタッフを削除", use_container_width=True):
-        st.session_state.staff_list = [s for s in st.session_state.staff_list if s["name"] != del_name]
-        # シフト結果もリセット（スタッフ変更により無効になるため）
-        st.session_state.shift_result = None
-        st.session_state.shift_success = False
-        st.rerun()
+# 設定ファイル読み込み
+st.sidebar.markdown('<p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 0.5rem;">過去の設定を復元</p>', unsafe_allow_html=True)
+st.sidebar.file_uploader("設定ファイル", type=["json"], key="setting_file_uploader", on_change=load_settings_callback, label_visibility="collapsed")
+if st.session_state.get("load_success_flag", False):
+    st.sidebar.success("✓ 復元完了")
+    st.session_state.load_success_flag = False
 
 # 保存ボタン
-st.sidebar.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+st.sidebar.markdown('<div style="height: 0.5rem;"></div>', unsafe_allow_html=True)
 export_data = {
     'input_year': st.session_state.get('input_year'),
     'input_month': st.session_state.get('input_month'),
@@ -1867,188 +1874,141 @@ if st.session_state.get('shift_success', False):
         )
 
 else:
-    # 初期状態の表示 - 進捗チェックリスト形式
+    # 初期状態の表示 - シンプルな進捗表示
     
-    # ヘッダー
-    st.markdown("""
-    <div style="
-        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-        border-radius: 16px;
-        padding: 1.5rem 2rem;
-        text-align: center;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.25);
-        margin-top: 0.5rem;
-        border: 1px solid #475569;
-        min-height: 80px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    ">
-        <h2 style="color: #f1f5f9; font-weight: 600; margin: 0; font-size: 1.2rem;">シフトを作成しましょう</h2>
-        <p style="color: #94a3b8; font-size: 0.85rem; margin: 0.5rem 0 0 0;">
-            サイドバーの設定を完了すると、シフトを自動作成できます
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown('<div style="height: 1rem;"></div>', unsafe_allow_html=True)
-    
-    # Step 1: スタッフ登録
+    # 進捗状況
     s1_done = progress["staff"]["done"]
-    s1_bg = "rgba(34, 197, 94, 0.1)" if s1_done else "rgba(100, 116, 139, 0.1)"
-    s1_border = "#22c55e" if s1_done else "#475569"
-    s1_icon_bg = "#22c55e" if s1_done else "#475569"
-    s1_icon = "✓" if s1_done else "1"
-    s1_text_color = "#86efac" if s1_done else "#94a3b8"
-    staff_detail = f'{progress["staff"]["count"]}名登録済み' if progress["staff"]["count"] > 0 else 'スタッフを追加してください'
-    
-    # Step 2: シフト設定
     s2_done = progress["settings"]["done"]
-    s2_bg = "rgba(34, 197, 94, 0.1)" if s2_done else "rgba(100, 116, 139, 0.1)"
-    s2_border = "#22c55e" if s2_done else "#475569"
-    s2_icon_bg = "#22c55e" if s2_done else "#475569"
-    s2_icon = "✓" if s2_done else "2"
-    s2_text_color = "#86efac" if s2_done else "#94a3b8"
+    s3_done = progress["personal"]["configured"] > 0
     
-    # Step 3: 個人設定（設定が1つでもあればチェック、なければ未完了）
-    s3_configured = progress["personal"]["configured"]
-    s3_total = progress["personal"]["total"]
-    s3_done = s3_configured > 0  # 1つでも設定があればOK
-    s3_bg = "rgba(34, 197, 94, 0.1)" if s3_done else "rgba(100, 116, 139, 0.1)"
-    s3_border = "#22c55e" if s3_done else "#475569"
-    s3_icon_bg = "#22c55e" if s3_done else "#475569"
-    s3_icon = "✓" if s3_done else "3"
-    s3_text_color = "#86efac" if s3_done else "#94a3b8"
-    personal_detail = f'{s3_configured}/{s3_total}名設定済み' if s3_total > 0 else '—'
+    staff_count = progress["staff"]["count"]
+    personal_count = progress["personal"]["configured"]
+    personal_total = progress["personal"]["total"]
     
-    # チェックリストHTML
-    st.markdown(f"""
-    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-        <div style="
-            background: {s1_bg};
-            border-radius: 12px;
-            padding: 1rem 1.25rem;
-            border-left: 4px solid {s1_border};
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        ">
-            <div style="
-                width: 32px; height: 32px;
-                background: {s1_icon_bg};
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 700;
-                font-size: 0.9rem;
-                color: white;
-                flex-shrink: 0;
-            ">{s1_icon}</div>
-            <div style="flex: 1;">
-                <div style="color: {s1_text_color}; font-weight: 600; font-size: 0.95rem;">スタッフを登録</div>
-                <div style="color: #64748b; font-size: 0.8rem;">{staff_detail}</div>
-            </div>
-            <div style="color: #64748b; font-size: 0.75rem;">サイドバー「スタッフ管理」</div>
-        </div>
-        <div style="
-            background: {s2_bg};
-            border-radius: 12px;
-            padding: 1rem 1.25rem;
-            border-left: 4px solid {s2_border};
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        ">
-            <div style="
-                width: 32px; height: 32px;
-                background: {s2_icon_bg};
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 700;
-                font-size: 0.9rem;
-                color: white;
-                flex-shrink: 0;
-            ">{s2_icon}</div>
-            <div style="flex: 1;">
-                <div style="color: {s2_text_color}; font-weight: 600; font-size: 0.95rem;">シフト設定</div>
-                <div style="color: #64748b; font-size: 0.8rem;">対象年月・公休数を設定</div>
-            </div>
-            <div style="color: #64748b; font-size: 0.75rem;">サイドバー「シフト設定」</div>
-        </div>
-        <div style="
-            background: {s3_bg};
-            border-radius: 12px;
-            padding: 1rem 1.25rem;
-            border-left: 4px solid {s3_border};
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        ">
-            <div style="
-                width: 32px; height: 32px;
-                background: {s3_icon_bg};
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 700;
-                font-size: 0.9rem;
-                color: white;
-                flex-shrink: 0;
-            ">{s3_icon}</div>
-            <div style="flex: 1;">
-                <div style="color: {s3_text_color}; font-weight: 600; font-size: 0.95rem;">個人設定</div>
-                <div style="color: #64748b; font-size: 0.8rem;">{personal_detail}</div>
-            </div>
-            <div style="color: #64748b; font-size: 0.75rem;">サイドバー「個人設定」</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown('<div style="height: 1rem;"></div>', unsafe_allow_html=True)
-    
-    # アクションエリア
+    # メインカード
     if progress["ready"]:
+        # 準備完了状態
         st.markdown("""
         <div style="
             background: linear-gradient(135deg, #065f46 0%, #047857 100%);
             border-radius: 16px;
-            padding: 1.5rem 2rem;
+            padding: 2rem;
             text-align: center;
-            border: 1px solid #10b981;
-            min-height: 80px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
             box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+            margin-top: 0.5rem;
+            border: 1px solid #10b981;
         ">
-            <div style="color: #d1fae5; font-weight: 600; font-size: 1rem;">✨ 準備完了！</div>
-            <div style="color: #a7f3d0; font-size: 0.85rem; margin-top: 0.25rem;">下のボタンをクリックしてシフトを作成</div>
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">✨</div>
+            <h2 style="color: #d1fae5; font-weight: 600; margin: 0; font-size: 1.3rem;">準備完了！</h2>
+            <p style="color: #a7f3d0; font-size: 0.9rem; margin: 0.5rem 0 0 0;">
+                下のボタンをクリックしてシフトを作成
+            </p>
         </div>
         """, unsafe_allow_html=True)
         
-        st.markdown('<div style="height: 0.75rem;"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="height: 1rem;"></div>', unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             if st.button("🚀 シフトを作成", type="primary", use_container_width=True, key="main_create_btn"):
                 st.session_state.run_solver = True
                 st.rerun()
     else:
+        # 設定中状態
         st.markdown("""
         <div style="
-            background: rgba(100, 116, 139, 0.1);
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
             border-radius: 16px;
-            padding: 1.5rem 2rem;
+            padding: 2rem;
             text-align: center;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+            margin-top: 0.5rem;
             border: 1px solid #475569;
-            min-height: 80px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
         ">
-            <div style="color: #94a3b8; font-size: 0.85rem;">上記のステップを完了すると、シフトを作成できます</div>
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">📋</div>
+            <h2 style="color: #f1f5f9; font-weight: 600; margin: 0; font-size: 1.3rem;">シフトを作成しましょう</h2>
+            <p style="color: #94a3b8; font-size: 0.9rem; margin: 0.5rem 0 0 0;">
+                サイドバーで設定を完了してください
+            </p>
         </div>
         """, unsafe_allow_html=True)
+    
+    st.markdown('<div style="height: 1.5rem;"></div>', unsafe_allow_html=True)
+    
+    # 進捗チェックリスト（横並び・コンパクト）
+    st.markdown(f"""
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+        <div style="
+            background: {'rgba(34, 197, 94, 0.15)' if s1_done else 'rgba(100, 116, 139, 0.1)'};
+            border-radius: 12px;
+            padding: 1.25rem 1rem;
+            text-align: center;
+            border: 1px solid {'#22c55e' if s1_done else '#475569'};
+        ">
+            <div style="
+                width: 40px; height: 40px;
+                background: {'#22c55e' if s1_done else '#475569'};
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                font-size: 1rem;
+                color: white;
+                margin: 0 auto 0.75rem auto;
+            ">{'✓' if s1_done else '1'}</div>
+            <div style="color: {'#86efac' if s1_done else '#94a3b8'}; font-weight: 600; font-size: 0.9rem;">スタッフ登録</div>
+            <div style="color: #64748b; font-size: 0.8rem; margin-top: 0.25rem;">{f'{staff_count}名' if staff_count > 0 else '未登録'}</div>
+        </div>
+        <div style="
+            background: {'rgba(34, 197, 94, 0.15)' if s2_done else 'rgba(100, 116, 139, 0.1)'};
+            border-radius: 12px;
+            padding: 1.25rem 1rem;
+            text-align: center;
+            border: 1px solid {'#22c55e' if s2_done else '#475569'};
+        ">
+            <div style="
+                width: 40px; height: 40px;
+                background: {'#22c55e' if s2_done else '#475569'};
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                font-size: 1rem;
+                color: white;
+                margin: 0 auto 0.75rem auto;
+            ">{'✓' if s2_done else '2'}</div>
+            <div style="color: {'#86efac' if s2_done else '#94a3b8'}; font-weight: 600; font-size: 0.9rem;">シフト設定</div>
+            <div style="color: #64748b; font-size: 0.8rem; margin-top: 0.25rem;">年月・公休数</div>
+        </div>
+        <div style="
+            background: {'rgba(34, 197, 94, 0.15)' if s3_done else 'rgba(100, 116, 139, 0.1)'};
+            border-radius: 12px;
+            padding: 1.25rem 1rem;
+            text-align: center;
+            border: 1px solid {'#22c55e' if s3_done else '#475569'};
+        ">
+            <div style="
+                width: 40px; height: 40px;
+                background: {'#22c55e' if s3_done else '#475569'};
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                font-size: 1rem;
+                color: white;
+                margin: 0 auto 0.75rem auto;
+            ">{'✓' if s3_done else '3'}</div>
+            <div style="color: {'#86efac' if s3_done else '#94a3b8'}; font-weight: 600; font-size: 0.9rem;">個人設定</div>
+            <div style="color: #64748b; font-size: 0.8rem; margin-top: 0.25rem;">{f'{personal_count}/{personal_total}名' if personal_total > 0 else '—'}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # ヘルプボタン
+    st.markdown('<div style="height: 1.5rem;"></div>', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col2:
+        if st.button("📖 使い方ガイド", use_container_width=True):
+            show_help_dialog()
