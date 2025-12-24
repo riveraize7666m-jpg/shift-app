@@ -569,6 +569,19 @@ def show_help_dialog():
     
     ---
     
+    ### 📅 年始固定シフトについて
+    
+    1月のシフトを作成する際、**1/1〜1/3のシフトをあらかじめ決めておきたい**場合に使用します。
+    
+    **使い方：**
+    1. 個人設定でスタッフを展開
+    2. 「年始固定シフト」にチェックを入れる
+    3. 1日・2日・3日それぞれのシフトを選択
+    
+    > 💡 例：1/1に夜勤、1/2に明け、1/3に公休を入れたい場合は、それぞれ「夜」「・」「◎」を選択します。
+    
+    ---
+    
     ### 📋 シフト記号の意味
     
     | 記号 | 説明 |
@@ -591,18 +604,6 @@ def show_help_dialog():
     | 常勤 | 🔵 | 全シフト対応可能 |
     | パート(日勤) | 🟢 | 日勤のみ対応 |
     | パート(早番) | 🟡 | 早番のみ対応 |
-    
-    ---
-    
-    ### 📅 年始固定シフトについて
-    
-    1月のシフトを作成する際、1/1〜1/3のシフトをあらかじめ決めておきたい場合に使用します。
-    
-    1. 個人設定でスタッフを展開
-    2. 「年始固定シフト」にチェックを入れる
-    3. 1日・2日・3日のシフトを選択
-    
-    > 💡 夜勤を設定した場合、翌日は自動的に「・」（明け）になります。
     
     ---
     
@@ -667,13 +668,12 @@ def get_progress_status():
             configured += 1
     status["personal"]["configured"] = configured
     
-    if len(regulars) == 0 or configured >= len(regulars) * 0.5:  # 50%以上設定でOK
+    # 個人設定は1つでも設定があればチェックマーク、なければグレー
+    if configured > 0:
         status["personal"]["done"] = True
         status["personal"]["icon"] = "✅"
         status["personal"]["color"] = "#22c55e"
-    elif configured > 0:
-        status["personal"]["icon"] = "🔶"
-        status["personal"]["color"] = "#f59e0b"
+    # スタッフがいない、または設定が一つもない場合はグレーのまま
     
     # 全体の準備状態
     status["ready"] = status["staff"]["done"] and status["settings"]["done"]
@@ -1870,7 +1870,26 @@ else:
     # 初期状態の表示 - 進捗チェックリスト形式
     
     # ヘッダー
-    st.markdown('<div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); border-radius: 16px; padding: 1.5rem 2rem; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,0.25); margin-top: 0.5rem; border: 1px solid #475569; min-height: 80px; display: flex; flex-direction: column; justify-content: center;"><h2 style="color: #f1f5f9; font-weight: 600; margin: 0; font-size: 1.2rem;">シフトを作成しましょう</h2><p style="color: #94a3b8; font-size: 0.85rem; margin: 0.5rem 0 0 0;">サイドバーの設定を完了すると、シフトを自動作成できます</p></div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        border-radius: 16px;
+        padding: 1.5rem 2rem;
+        text-align: center;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+        margin-top: 0.5rem;
+        border: 1px solid #475569;
+        min-height: 80px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    ">
+        <h2 style="color: #f1f5f9; font-weight: 600; margin: 0; font-size: 1.2rem;">シフトを作成しましょう</h2>
+        <p style="color: #94a3b8; font-size: 0.85rem; margin: 0.5rem 0 0 0;">
+            サイドバーの設定を完了すると、シフトを自動作成できます
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     
     st.markdown('<div style="height: 1rem;"></div>', unsafe_allow_html=True)
     
@@ -1903,32 +1922,113 @@ else:
     personal_detail = f'{s3_configured}/{s3_total}名設定済み' if s3_total > 0 else '—'
     
     # チェックリストHTML
-    checklist_html = f'''
+    st.markdown(f"""
     <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-        <div style="background: {s1_bg}; border-radius: 12px; padding: 1rem 1.25rem; border-left: 4px solid {s1_border}; display: flex; align-items: center; gap: 1rem;">
-            <div style="width: 32px; height: 32px; background: {s1_icon_bg}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; color: white; flex-shrink: 0;">{s1_icon}</div>
-            <div style="flex: 1;"><div style="color: {s1_text_color}; font-weight: 600; font-size: 0.95rem;">スタッフを登録</div><div style="color: #64748b; font-size: 0.8rem;">{staff_detail}</div></div>
+        <div style="
+            background: {s1_bg};
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            border-left: 4px solid {s1_border};
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        ">
+            <div style="
+                width: 32px; height: 32px;
+                background: {s1_icon_bg};
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                font-size: 0.9rem;
+                color: white;
+                flex-shrink: 0;
+            ">{s1_icon}</div>
+            <div style="flex: 1;">
+                <div style="color: {s1_text_color}; font-weight: 600; font-size: 0.95rem;">スタッフを登録</div>
+                <div style="color: #64748b; font-size: 0.8rem;">{staff_detail}</div>
+            </div>
             <div style="color: #64748b; font-size: 0.75rem;">サイドバー「スタッフ管理」</div>
         </div>
-        <div style="background: {s2_bg}; border-radius: 12px; padding: 1rem 1.25rem; border-left: 4px solid {s2_border}; display: flex; align-items: center; gap: 1rem;">
-            <div style="width: 32px; height: 32px; background: {s2_icon_bg}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; color: white; flex-shrink: 0;">{s2_icon}</div>
-            <div style="flex: 1;"><div style="color: {s2_text_color}; font-weight: 600; font-size: 0.95rem;">シフト設定</div><div style="color: #64748b; font-size: 0.8rem;">対象年月・公休数を設定</div></div>
+        <div style="
+            background: {s2_bg};
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            border-left: 4px solid {s2_border};
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        ">
+            <div style="
+                width: 32px; height: 32px;
+                background: {s2_icon_bg};
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                font-size: 0.9rem;
+                color: white;
+                flex-shrink: 0;
+            ">{s2_icon}</div>
+            <div style="flex: 1;">
+                <div style="color: {s2_text_color}; font-weight: 600; font-size: 0.95rem;">シフト設定</div>
+                <div style="color: #64748b; font-size: 0.8rem;">対象年月・公休数を設定</div>
+            </div>
             <div style="color: #64748b; font-size: 0.75rem;">サイドバー「シフト設定」</div>
         </div>
-        <div style="background: {s3_bg}; border-radius: 12px; padding: 1rem 1.25rem; border-left: 4px solid {s3_border}; display: flex; align-items: center; gap: 1rem;">
-            <div style="width: 32px; height: 32px; background: {s3_icon_bg}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; color: white; flex-shrink: 0;">{s3_icon}</div>
-            <div style="flex: 1;"><div style="color: {s3_text_color}; font-weight: 600; font-size: 0.95rem;">個人設定</div><div style="color: #64748b; font-size: 0.8rem;">{personal_detail}</div></div>
+        <div style="
+            background: {s3_bg};
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            border-left: 4px solid {s3_border};
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        ">
+            <div style="
+                width: 32px; height: 32px;
+                background: {s3_icon_bg};
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                font-size: 0.9rem;
+                color: white;
+                flex-shrink: 0;
+            ">{s3_icon}</div>
+            <div style="flex: 1;">
+                <div style="color: {s3_text_color}; font-weight: 600; font-size: 0.95rem;">個人設定</div>
+                <div style="color: #64748b; font-size: 0.8rem;">{personal_detail}</div>
+            </div>
             <div style="color: #64748b; font-size: 0.75rem;">サイドバー「個人設定」</div>
         </div>
     </div>
-    '''
-    st.markdown(checklist_html, unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
     
     st.markdown('<div style="height: 1rem;"></div>', unsafe_allow_html=True)
     
     # アクションエリア
     if progress["ready"]:
-        st.markdown('<div style="background: linear-gradient(135deg, #065f46 0%, #047857 100%); border-radius: 12px; padding: 1.5rem 2rem; text-align: center; border: 1px solid #10b981; min-height: 80px; display: flex; flex-direction: column; justify-content: center;"><div style="color: #d1fae5; font-weight: 600; font-size: 1rem;">✨ 準備完了！</div><div style="color: #a7f3d0; font-size: 0.85rem; margin-top: 0.25rem;">下のボタンをクリックしてシフトを作成</div></div>', unsafe_allow_html=True)
+        st.markdown("""
+        <div style="
+            background: linear-gradient(135deg, #065f46 0%, #047857 100%);
+            border-radius: 16px;
+            padding: 1.5rem 2rem;
+            text-align: center;
+            border: 1px solid #10b981;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+        ">
+            <div style="color: #d1fae5; font-weight: 600; font-size: 1rem;">✨ 準備完了！</div>
+            <div style="color: #a7f3d0; font-size: 0.85rem; margin-top: 0.25rem;">下のボタンをクリックしてシフトを作成</div>
+        </div>
+        """, unsafe_allow_html=True)
         
         st.markdown('<div style="height: 0.75rem;"></div>', unsafe_allow_html=True)
         col1, col2, col3 = st.columns([1, 2, 1])
@@ -1937,4 +2037,18 @@ else:
                 st.session_state.run_solver = True
                 st.rerun()
     else:
-        st.markdown('<div style="background: rgba(100, 116, 139, 0.1); border-radius: 12px; padding: 1.5rem 2rem; text-align: center; border: 1px solid #475569; min-height: 80px; display: flex; flex-direction: column; justify-content: center;"><div style="color: #94a3b8; font-size: 0.85rem;">上記のステップを完了すると、シフトを作成できます</div></div>', unsafe_allow_html=True)
+        st.markdown("""
+        <div style="
+            background: rgba(100, 116, 139, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem 2rem;
+            text-align: center;
+            border: 1px solid #475569;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        ">
+            <div style="color: #94a3b8; font-size: 0.85rem;">上記のステップを完了すると、シフトを作成できます</div>
+        </div>
+        """, unsafe_allow_html=True)
