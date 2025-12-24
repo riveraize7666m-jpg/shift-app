@@ -777,12 +777,14 @@ with st.sidebar:
     ''', unsafe_allow_html=True)
 
     col_y, col_m = st.columns(2)
-    with col_y: YEAR = st.number_input("年", 2025, 2030, key="input_year")
-    with col_m: MONTH = st.number_input("月", 1, 12, key="input_month")
+    with col_y: YEAR = st.number_input("年", min_value=2025, max_value=2030, key="input_year")
+    with col_m: MONTH = st.number_input("月", min_value=1, max_value=12, key="input_month")
 
     _, DAYS = calendar.monthrange(YEAR, MONTH)
     
-    TARGET_OFF_DAYS = st.number_input("常勤の公休数", 1, 15, key="target_off", help="目標となる公休日数を設定")
+    # セッション状態の値を明示的に使用
+    current_target_off = st.session_state.get('target_off', 9)
+    TARGET_OFF_DAYS = st.number_input("常勤の公休数", min_value=1, max_value=15, value=current_target_off, key="target_off", help="目標となる公休日数を設定")
     
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
@@ -1999,8 +2001,7 @@ else:
             margin-top: 0.5rem;
             border: 1px solid #475569;
         ">
-            <div style="font-size: 2rem; margin-bottom: 0.5rem;">📋</div>
-            <h2 style="color: #f1f5f9; font-weight: 600; margin: 0; font-size: 1.3rem;">シフトを作成しましょう</h2>
+            <h2 style="color: #f1f5f9; font-weight: 600; margin: 0; font-size: 1.3rem;">📋 シフトを作成しましょう</h2>
             <p style="color: #94a3b8; font-size: 0.9rem; margin: 0.5rem 0 0 0;">
                 サイドバーで設定を完了してください
             </p>
