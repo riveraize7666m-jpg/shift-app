@@ -524,10 +524,7 @@ st.markdown("""
 # 2. セッション状態の初期化
 # ==========================================
 if "staff_list" not in st.session_state:
-    st.session_state.staff_list = [
-        {"name": "スタッフA", "type": 0},
-        {"name": "スタッフB", "type": 0}
-    ]
+    st.session_state.staff_list = []
 
 if "input_year" not in st.session_state: st.session_state.input_year = 2026
 if "input_month" not in st.session_state: st.session_state.input_month = 2
@@ -594,6 +591,18 @@ def show_help_dialog():
     | 常勤 | 🔵 | 全シフト対応可能 |
     | パート(日勤) | 🟢 | 日勤のみ対応 |
     | パート(早番) | 🟡 | 早番のみ対応 |
+    
+    ---
+    
+    ### 📅 年始固定シフトについて
+    
+    1月のシフトを作成する際、1/1〜1/3のシフトをあらかじめ決めておきたい場合に使用します。
+    
+    1. 個人設定でスタッフを展開
+    2. 「年始固定シフト」にチェックを入れる
+    3. 1日・2日・3日のシフトを選択
+    
+    > 💡 夜勤を設定した場合、翌日は自動的に「・」（明け）になります。
     
     ---
     
@@ -793,17 +802,29 @@ for idx, staff in enumerate(st.session_state.staff_list):
             if key_streak not in st.session_state: st.session_state[key_streak] = 0
             prev_streak = st.number_input("連勤日数", 0, 10, key=key_streak)
         
-        f1, f2, f3 = "", "", ""
-        if st.checkbox("年始固定シフト", key=f"open_fix_{name}"):
+        key_f1, key_f2, key_f3 = f"f1_{name}", f"f2_{name}", f"f3_{name}"
+        open_fix_key = f"open_fix_{name}"
+        
+        # チェックボックスの状態を取得（まだ存在しない場合はFalse）
+        is_fixed_open = st.session_state.get(open_fix_key, False)
+        
+        if st.checkbox("年始固定シフト", key=open_fix_key):
             fix_opts = [""] + SHIFT_OPTIONS
-            key_f1, key_f2, key_f3 = f"f1_{name}", f"f2_{name}", f"f3_{name}"
             if key_f1 not in st.session_state: st.session_state[key_f1] = ""
             if key_f2 not in st.session_state: st.session_state[key_f2] = ""
             if key_f3 not in st.session_state: st.session_state[key_f3] = ""
             cols = st.columns(3)
-            with cols[0]: f1 = st.selectbox("1日", fix_opts, key=key_f1)
-            with cols[1]: f2 = st.selectbox("2日", fix_opts, key=key_f2)
-            with cols[2]: f3 = st.selectbox("3日", fix_opts, key=key_f3)
+            with cols[0]: st.selectbox("1日", fix_opts, key=key_f1)
+            with cols[1]: st.selectbox("2日", fix_opts, key=key_f2)
+            with cols[2]: st.selectbox("3日", fix_opts, key=key_f3)
+        
+        # チェックボックスがチェックされている場合のみ、セッション状態から値を取得
+        if st.session_state.get(open_fix_key, False):
+            f1 = st.session_state.get(key_f1, "")
+            f2 = st.session_state.get(key_f2, "")
+            f3 = st.session_state.get(key_f3, "")
+        else:
+            f1, f2, f3 = "", "", ""
 
         night_target_val = 0
         if stype != 0:
@@ -1849,190 +1870,71 @@ else:
     # 初期状態の表示 - 進捗チェックリスト形式
     
     # ヘッダー
-    st.markdown("""
-    <div style="
-        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-        border-radius: 16px;
-        padding: 1.5rem 2rem;
-        text-align: center;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.25);
-        margin-top: 0.5rem;
-        border: 1px solid #475569;
-    ">
-        <h2 style="color: #f1f5f9; font-weight: 600; margin: 0; font-size: 1.2rem;">シフトを作成しましょう</h2>
-        <p style="color: #94a3b8; font-size: 0.85rem; margin: 0.5rem 0 0 0;">
-            サイドバーの設定を完了すると、シフトを自動作成できます
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); border-radius: 16px; padding: 1.5rem 2rem; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,0.25); margin-top: 0.5rem; border: 1px solid #475569; min-height: 80px; display: flex; flex-direction: column; justify-content: center;"><h2 style="color: #f1f5f9; font-weight: 600; margin: 0; font-size: 1.2rem;">シフトを作成しましょう</h2><p style="color: #94a3b8; font-size: 0.85rem; margin: 0.5rem 0 0 0;">サイドバーの設定を完了すると、シフトを自動作成できます</p></div>', unsafe_allow_html=True)
     
     st.markdown('<div style="height: 1rem;"></div>', unsafe_allow_html=True)
     
-    # 進捗チェックリスト
-    def get_step_style(done, in_progress=False):
-        if done:
-            return {
-                "bg": "rgba(34, 197, 94, 0.1)",
-                "border": "#22c55e",
-                "icon_bg": "#22c55e",
-                "icon": "✓",
-                "text_color": "#86efac"
-            }
-        elif in_progress:
-            return {
-                "bg": "rgba(245, 158, 11, 0.1)",
-                "border": "#f59e0b",
-                "icon_bg": "#f59e0b",
-                "icon": "→",
-                "text_color": "#fcd34d"
-            }
-        else:
-            return {
-                "bg": "rgba(100, 116, 139, 0.1)",
-                "border": "#475569",
-                "icon_bg": "#475569",
-                "icon": str(1),
-                "text_color": "#94a3b8"
-            }
-    
     # Step 1: スタッフ登録
-    s1 = get_step_style(progress["staff"]["done"], progress["staff"]["count"] > 0 and not progress["staff"]["done"])
-    s1["icon"] = "✓" if progress["staff"]["done"] else "1"
+    s1_done = progress["staff"]["done"]
+    s1_bg = "rgba(34, 197, 94, 0.1)" if s1_done else "rgba(100, 116, 139, 0.1)"
+    s1_border = "#22c55e" if s1_done else "#475569"
+    s1_icon_bg = "#22c55e" if s1_done else "#475569"
+    s1_icon = "✓" if s1_done else "1"
+    s1_text_color = "#86efac" if s1_done else "#94a3b8"
     staff_detail = f'{progress["staff"]["count"]}名登録済み' if progress["staff"]["count"] > 0 else 'スタッフを追加してください'
     
     # Step 2: シフト設定
-    s2 = get_step_style(progress["settings"]["done"])
-    s2["icon"] = "✓" if progress["settings"]["done"] else "2"
+    s2_done = progress["settings"]["done"]
+    s2_bg = "rgba(34, 197, 94, 0.1)" if s2_done else "rgba(100, 116, 139, 0.1)"
+    s2_border = "#22c55e" if s2_done else "#475569"
+    s2_icon_bg = "#22c55e" if s2_done else "#475569"
+    s2_icon = "✓" if s2_done else "2"
+    s2_text_color = "#86efac" if s2_done else "#94a3b8"
     
-    # Step 3: 個人設定
-    s3_in_progress = progress["personal"]["configured"] > 0 and not progress["personal"]["done"]
-    s3 = get_step_style(progress["personal"]["done"], s3_in_progress)
-    s3["icon"] = "✓" if progress["personal"]["done"] else "3"
-    personal_detail = f'{progress["personal"]["configured"]}/{progress["personal"]["total"]}名設定済み' if progress["personal"]["total"] > 0 else '—'
+    # Step 3: 個人設定（設定が1つでもあればチェック、なければ未完了）
+    s3_configured = progress["personal"]["configured"]
+    s3_total = progress["personal"]["total"]
+    s3_done = s3_configured > 0  # 1つでも設定があればOK
+    s3_bg = "rgba(34, 197, 94, 0.1)" if s3_done else "rgba(100, 116, 139, 0.1)"
+    s3_border = "#22c55e" if s3_done else "#475569"
+    s3_icon_bg = "#22c55e" if s3_done else "#475569"
+    s3_icon = "✓" if s3_done else "3"
+    s3_text_color = "#86efac" if s3_done else "#94a3b8"
+    personal_detail = f'{s3_configured}/{s3_total}名設定済み' if s3_total > 0 else '—'
     
-    st.markdown(f'''
+    # チェックリストHTML
+    checklist_html = f'''
     <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-        <!-- Step 1 -->
-        <div style="
-            background: {s1["bg"]};
-            border-radius: 12px;
-            padding: 1rem 1.25rem;
-            border-left: 4px solid {s1["border"]};
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        ">
-            <div style="
-                width: 32px; height: 32px;
-                background: {s1["icon_bg"]};
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 700;
-                font-size: 0.9rem;
-                color: white;
-                flex-shrink: 0;
-            ">{s1["icon"]}</div>
-            <div style="flex: 1;">
-                <div style="color: {s1["text_color"]}; font-weight: 600; font-size: 0.95rem;">スタッフを登録</div>
-                <div style="color: #64748b; font-size: 0.8rem;">{staff_detail}</div>
-            </div>
+        <div style="background: {s1_bg}; border-radius: 12px; padding: 1rem 1.25rem; border-left: 4px solid {s1_border}; display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 32px; height: 32px; background: {s1_icon_bg}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; color: white; flex-shrink: 0;">{s1_icon}</div>
+            <div style="flex: 1;"><div style="color: {s1_text_color}; font-weight: 600; font-size: 0.95rem;">スタッフを登録</div><div style="color: #64748b; font-size: 0.8rem;">{staff_detail}</div></div>
             <div style="color: #64748b; font-size: 0.75rem;">サイドバー「スタッフ管理」</div>
         </div>
-        
-        <!-- Step 2 -->
-        <div style="
-            background: {s2["bg"]};
-            border-radius: 12px;
-            padding: 1rem 1.25rem;
-            border-left: 4px solid {s2["border"]};
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        ">
-            <div style="
-                width: 32px; height: 32px;
-                background: {s2["icon_bg"]};
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 700;
-                font-size: 0.9rem;
-                color: white;
-                flex-shrink: 0;
-            ">{s2["icon"]}</div>
-            <div style="flex: 1;">
-                <div style="color: {s2["text_color"]}; font-weight: 600; font-size: 0.95rem;">シフト設定</div>
-                <div style="color: #64748b; font-size: 0.8rem;">対象年月・公休数を設定</div>
-            </div>
+        <div style="background: {s2_bg}; border-radius: 12px; padding: 1rem 1.25rem; border-left: 4px solid {s2_border}; display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 32px; height: 32px; background: {s2_icon_bg}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; color: white; flex-shrink: 0;">{s2_icon}</div>
+            <div style="flex: 1;"><div style="color: {s2_text_color}; font-weight: 600; font-size: 0.95rem;">シフト設定</div><div style="color: #64748b; font-size: 0.8rem;">対象年月・公休数を設定</div></div>
             <div style="color: #64748b; font-size: 0.75rem;">サイドバー「シフト設定」</div>
         </div>
-        
-        <!-- Step 3 -->
-        <div style="
-            background: {s3["bg"]};
-            border-radius: 12px;
-            padding: 1rem 1.25rem;
-            border-left: 4px solid {s3["border"]};
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        ">
-            <div style="
-                width: 32px; height: 32px;
-                background: {s3["icon_bg"]};
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 700;
-                font-size: 0.9rem;
-                color: white;
-                flex-shrink: 0;
-            ">{s3["icon"]}</div>
-            <div style="flex: 1;">
-                <div style="color: {s3["text_color"]}; font-weight: 600; font-size: 0.95rem;">個人設定（任意）</div>
-                <div style="color: #64748b; font-size: 0.8rem;">{personal_detail}</div>
-            </div>
+        <div style="background: {s3_bg}; border-radius: 12px; padding: 1rem 1.25rem; border-left: 4px solid {s3_border}; display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 32px; height: 32px; background: {s3_icon_bg}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; color: white; flex-shrink: 0;">{s3_icon}</div>
+            <div style="flex: 1;"><div style="color: {s3_text_color}; font-weight: 600; font-size: 0.95rem;">個人設定</div><div style="color: #64748b; font-size: 0.8rem;">{personal_detail}</div></div>
             <div style="color: #64748b; font-size: 0.75rem;">サイドバー「個人設定」</div>
         </div>
     </div>
-    ''', unsafe_allow_html=True)
+    '''
+    st.markdown(checklist_html, unsafe_allow_html=True)
     
     st.markdown('<div style="height: 1rem;"></div>', unsafe_allow_html=True)
     
     # アクションエリア
     if progress["ready"]:
-        st.markdown('''
-        <div style="
-            background: linear-gradient(135deg, #065f46 0%, #047857 100%);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            text-align: center;
-            border: 1px solid #10b981;
-        ">
-            <div style="color: #d1fae5; font-weight: 600; font-size: 0.95rem;">✨ 準備完了！</div>
-            <div style="color: #a7f3d0; font-size: 0.85rem; margin-top: 0.25rem;">サイドバー上部の「シフトを作成」ボタンをクリック</div>
-        </div>
-        ''', unsafe_allow_html=True)
+        st.markdown('<div style="background: linear-gradient(135deg, #065f46 0%, #047857 100%); border-radius: 12px; padding: 1.5rem 2rem; text-align: center; border: 1px solid #10b981; min-height: 80px; display: flex; flex-direction: column; justify-content: center;"><div style="color: #d1fae5; font-weight: 600; font-size: 1rem;">✨ 準備完了！</div><div style="color: #a7f3d0; font-size: 0.85rem; margin-top: 0.25rem;">下のボタンをクリックしてシフトを作成</div></div>', unsafe_allow_html=True)
+        
+        st.markdown('<div style="height: 0.75rem;"></div>', unsafe_allow_html=True)
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("🚀 シフトを作成", type="primary", use_container_width=True, key="main_create_btn"):
+                st.session_state.run_solver = True
+                st.rerun()
     else:
-        st.markdown('''
-        <div style="
-            background: rgba(100, 116, 139, 0.1);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            text-align: center;
-            border: 1px solid #475569;
-        ">
-            <div style="color: #94a3b8; font-size: 0.85rem;">上記のステップを完了すると、シフトを作成できます</div>
-        </div>
-        ''', unsafe_allow_html=True)
-    
-    # ヘルプボタン
-    st.markdown('<div style="height: 0.75rem;"></div>', unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col2:
-        if st.button("📖 使い方ガイド", use_container_width=True):
-            show_help_dialog()
+        st.markdown('<div style="background: rgba(100, 116, 139, 0.1); border-radius: 12px; padding: 1.5rem 2rem; text-align: center; border: 1px solid #475569; min-height: 80px; display: flex; flex-direction: column; justify-content: center;"><div style="color: #94a3b8; font-size: 0.85rem;">上記のステップを完了すると、シフトを作成できます</div></div>', unsafe_allow_html=True)
