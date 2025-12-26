@@ -2,10 +2,13 @@
 
 import { ShiftRequest, ShiftResponse } from '../types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
+/**
+ * シフトを作成する
+ * Vercel Serverless Function (Next.js API Route) を使用
+ */
 export async function createShift(request: ShiftRequest): Promise<ShiftResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/shift/solve`, {
+  // Next.js API Routeを使用（相対パス）
+  const response = await fetch('/api/shift/solve', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -17,7 +20,7 @@ export async function createShift(request: ShiftRequest): Promise<ShiftResponse>
     let errorMessage = 'シフトの作成に失敗しました';
     try {
       const error = await response.json();
-      errorMessage = error.detail || errorMessage;
+      errorMessage = error.error || error.detail || errorMessage;
     } catch {
       errorMessage = `HTTP Error: ${response.status} ${response.statusText}`;
     }
