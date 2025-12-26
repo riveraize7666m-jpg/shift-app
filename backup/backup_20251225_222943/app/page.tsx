@@ -369,19 +369,6 @@ export default function Home() {
                 <h3 className="font-bold text-slate-800 mb-1">💡 ヒント</h3>
                 <p className="text-sm">設定ファイルを保存しておくと、翌月のシフト作成が楽になります。</p>
               </div>
-              <div className="pt-3 border-t border-slate-200">
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                  <h3 className="font-bold text-amber-800 mb-2 flex items-center gap-1.5">
-                    <span>⚠️</span>
-                    ご利用にあたっての注意点
-                  </h3>
-                  <ul className="text-sm text-amber-900 space-y-1.5">
-                    <li>• シフト作成は<strong>複数回お試しください</strong>。毎回異なるパターンが生成されます。</li>
-                    <li>• 生成後に表示される「<strong>確認ポイント</strong>」をチェックし、最も良い結果を採用してください。</li>
-                    <li>• 本ツールは<strong>下書き作成を目的</strong>としています。すべてのルールを100%満たす完璧なシフトは構造上作成が困難なため、<strong>手直しが必要</strong>な場合があります。</li>
-                  </ul>
-                </div>
-              </div>
             </div>
             <button
               onClick={() => setShowHelp(false)}
