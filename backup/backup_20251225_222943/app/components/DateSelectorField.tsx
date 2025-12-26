@@ -28,19 +28,31 @@ export function DateSelectorField({
   onClose,
 }: DateSelectorFieldProps) {
   return (
-    <div className="date-selector-container">
+    <div className="relative date-selector-container">
       <label className="block text-xs text-slate-500 mb-1">{label}</label>
-      <input
-        type="text"
-        readOnly
-        value={selectedDays.length > 0 ? selectedDays.join(',') : ''}
-        placeholder="クリックして選択..."
-        className="w-full px-2 py-1.5 text-xs input-field rounded cursor-pointer"
-        onClick={(e) => {
-          e.stopPropagation();
-          onOpen();
-        }}
-      />
+      <div className="flex gap-1">
+        <input
+          type="text"
+          readOnly
+          value={selectedDays.length > 0 ? selectedDays.join(',') : ''}
+          placeholder="選択..."
+          className="flex-1 px-2.5 py-2 text-sm input-field rounded-lg cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpen();
+          }}
+        />
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            isOpen ? onClose() : onOpen();
+          }}
+          className="px-2.5 py-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors text-sm font-medium"
+        >
+          📅
+        </button>
+      </div>
       {isOpen && (
         <div onClick={(e) => e.stopPropagation()}>
           <MiniCalendar

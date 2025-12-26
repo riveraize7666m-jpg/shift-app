@@ -1,6 +1,5 @@
 // StaffSettingsPanel component for staff management and settings
 
-import { useState } from 'react';
 import { StaffData } from '../types';
 import { SHIFT_OPTIONS, STAFF_TYPES } from '../constants';
 import { DateSelectorField } from './DateSelectorField';
@@ -20,71 +19,6 @@ interface StaffSettingsPanelProps {
   onCloseCalendar: () => void;
 }
 
-// 確認モーダルコンポーネント
-function ConfirmModal({
-  isOpen,
-  staffName,
-  onConfirm,
-  onCancel,
-}: {
-  isOpen: boolean;
-  staffName: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* オーバーレイ */}
-      <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onCancel}
-      />
-      
-      {/* モーダル本体 */}
-      <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-80 max-w-[90vw] animate-in fade-in zoom-in duration-200">
-        {/* アイコン */}
-        <div className="flex justify-center mb-4">
-          <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center">
-            <svg className="w-7 h-7 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </div>
-        </div>
-        
-        {/* タイトル */}
-        <h3 className="text-lg font-bold text-slate-800 text-center mb-2">
-          スタッフを削除
-        </h3>
-        
-        {/* メッセージ */}
-        <p className="text-sm text-slate-600 text-center mb-6">
-          <span className="font-semibold text-slate-800">「{staffName}」</span>
-          <br />
-          を削除してもよろしいですか？
-        </p>
-        
-        {/* ボタン */}
-        <div className="flex gap-3">
-          <button
-            onClick={onCancel}
-            className="flex-1 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-semibold text-sm hover:bg-slate-200 transition-colors"
-          >
-            キャンセル
-          </button>
-          <button
-            onClick={onConfirm}
-            className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl font-semibold text-sm hover:bg-red-600 transition-colors"
-          >
-            削除する
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function StaffSettingsPanel({
   year,
   month,
@@ -99,56 +33,30 @@ export function StaffSettingsPanel({
   onOpenCalendar,
   onCloseCalendar,
 }: StaffSettingsPanelProps) {
-  // 削除確認モーダルの状態
-  const [deleteConfirm, setDeleteConfirm] = useState<{ index: number; name: string } | null>(null);
-
-  const handleRemoveStaff = (index: number, staffName: string) => {
-    setDeleteConfirm({ index, name: staffName });
-  };
-
-  const confirmDelete = () => {
-    if (deleteConfirm) {
-      onRemoveStaff(deleteConfirm.index);
-      setDeleteConfirm(null);
-    }
-  };
-
-  const cancelDelete = () => {
-    setDeleteConfirm(null);
-  };
-
   return (
     <>
-      {/* 削除確認モーダル */}
-      <ConfirmModal
-        isOpen={deleteConfirm !== null}
-        staffName={deleteConfirm?.name || ''}
-        onConfirm={confirmDelete}
-        onCancel={cancelDelete}
-      />
-
       {/* スタッフ管理 */}
-      <div className="card rounded-xl p-4">
-        <div className="flex items-center justify-between mb-3">
+      <div className="card rounded-xl p-5">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <span className="w-7 h-7 rounded-lg bg-cyan-100 flex items-center justify-center text-cyan-600 text-sm">
+            <span className="w-8 h-8 rounded-lg bg-cyan-100 flex items-center justify-center text-cyan-600 flex-shrink-0">
               👥
             </span>
-            <span className="text-base font-bold text-slate-800">スタッフ管理</span>
+            <span className="text-lg font-bold text-slate-800">スタッフ管理</span>
           </div>
           <button
             onClick={onAddStaff}
-            className="px-2.5 py-1 btn-primary rounded-lg text-xs font-semibold"
+            className="px-3 py-1.5 btn-primary rounded-lg text-sm font-semibold flex-shrink-0"
           >
             + 追加
           </button>
         </div>
 
-        <div className="space-y-1.5 max-h-48 overflow-y-auto">
+        <div className="space-y-2 max-h-60 overflow-y-auto">
           {staffList.map((staff, index) => (
             <div
               key={index}
-              className={`p-2 rounded-lg cursor-pointer transition-all ${
+              className={`p-3 rounded-lg cursor-pointer transition-all ${
                 selectedStaffIndex === index
                   ? 'bg-indigo-50 border-2 border-indigo-300'
                   : 'bg-slate-50 border-2 border-transparent hover:bg-slate-100'
@@ -156,18 +64,18 @@ export function StaffSettingsPanel({
               onClick={() => onSelectStaff(index)}
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">
                     {STAFF_TYPES.find(t => t.value === staff.type)?.icon || '🔵'}
                   </span>
-                  <span className="font-medium text-slate-700 text-sm">{staff.name}</span>
+                  <span className="font-medium text-slate-700">{staff.name}</span>
                 </div>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleRemoveStaff(index, staff.name);
+                    onRemoveStaff(index);
                   }}
-                  className="text-red-500 hover:text-red-600 text-xs px-1.5 py-0.5 rounded hover:bg-red-50 transition-colors"
+                  className="text-red-500 hover:text-red-600 text-sm px-2 py-1 rounded hover:bg-red-50 transition-colors"
                 >
                   削除
                 </button>
@@ -175,11 +83,11 @@ export function StaffSettingsPanel({
             </div>
           ))}
           {staffList.length === 0 && (
-            <div className="text-center py-4">
-              <div className="w-10 h-10 mx-auto mb-2 rounded-xl bg-slate-100 flex items-center justify-center">
-                <span className="text-xl opacity-40">👤</span>
+            <div className="text-center py-6">
+              <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-slate-100 flex items-center justify-center">
+                <span className="text-2xl opacity-40">👤</span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-sm text-slate-400">
                 スタッフを追加してください
               </p>
             </div>
@@ -189,9 +97,9 @@ export function StaffSettingsPanel({
 
       {/* 選択中のスタッフの詳細設定 */}
       {selectedStaffIndex !== null && staffList[selectedStaffIndex] && (
-        <div className="card rounded-xl p-4">
-          <h2 className="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
-            <span className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 text-sm">
+        <div className="card rounded-xl p-5">
+          <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <span className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600">
               👤
             </span>
             個人設定
@@ -200,23 +108,23 @@ export function StaffSettingsPanel({
             const staff = staffList[selectedStaffIndex];
             return (
               <>
-                <div className="space-y-3 max-h-[320px] overflow-y-auto">
+                <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1">
                   <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">名前</label>
+                    <label className="block text-sm font-medium text-slate-600 mb-1.5">名前</label>
                     <input
                       type="text"
                       value={staff.name}
                       onChange={(e) => onUpdateStaff(selectedStaffIndex, { name: e.target.value })}
-                      className="w-full px-2.5 py-2 input-field rounded-lg text-sm"
+                      className="w-full px-3 py-2.5 input-field rounded-lg text-sm"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">属性</label>
+                    <label className="block text-sm font-medium text-slate-600 mb-1.5">属性</label>
                     <select
                       value={staff.type}
                       onChange={(e) => onUpdateStaff(selectedStaffIndex, { type: Number(e.target.value) })}
-                      className="w-full px-2.5 py-2 input-field rounded-lg text-sm"
+                      className="w-full px-3 py-2.5 input-field rounded-lg text-sm"
                     >
                       {STAFF_TYPES.map((type) => (
                         <option key={type.value} value={type.value}>
@@ -226,13 +134,13 @@ export function StaffSettingsPanel({
                     </select>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">前月末</label>
+                      <label className="block text-sm font-medium text-slate-600 mb-1.5">前月末シフト</label>
                       <select
                         value={staff.prev_shift}
                         onChange={(e) => onUpdateStaff(selectedStaffIndex, { prev_shift: e.target.value })}
-                        className="w-full px-2 py-2 input-field rounded-lg text-sm"
+                        className="w-full px-3 py-2.5 input-field rounded-lg text-sm"
                       >
                         {SHIFT_OPTIONS.map((opt) => (
                           <option key={opt} value={opt}>{opt}</option>
@@ -240,22 +148,22 @@ export function StaffSettingsPanel({
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">連勤</label>
+                      <label className="block text-sm font-medium text-slate-600 mb-1.5">連勤日数</label>
                       <input
                         type="number"
                         min="0"
                         max="10"
                         value={staff.prev_streak}
                         onChange={(e) => onUpdateStaff(selectedStaffIndex, { prev_streak: Number(e.target.value) })}
-                        className="w-full px-2 py-2 input-field rounded-lg text-sm"
+                        className="w-full px-3 py-2.5 input-field rounded-lg text-sm"
                       />
                     </div>
                   </div>
 
                   {staff.type === 0 && (
                     <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">
-                        🌙 夜勤目標
+                      <label className="block text-sm font-medium text-slate-600 mb-1.5">
+                        🌙 夜勤目標回数
                       </label>
                       <input
                         type="number"
@@ -263,14 +171,14 @@ export function StaffSettingsPanel({
                         max="10"
                         value={staff.night_target}
                         onChange={(e) => onUpdateStaff(selectedStaffIndex, { night_target: Number(e.target.value) })}
-                        className="w-full px-2.5 py-2 input-field rounded-lg text-sm"
+                        className="w-full px-3 py-2.5 input-field rounded-lg text-sm"
                       />
                     </div>
                   )}
 
-                  <div className="border-t border-slate-200 pt-3">
-                    <label className="block text-xs font-semibold text-indigo-600 mb-2">希望シフト</label>
-                    <div className="space-y-2">
+                  <div className="border-t border-slate-200 pt-4">
+                    <label className="block text-sm font-semibold text-indigo-600 mb-3">希望シフト</label>
+                    <div className="grid grid-cols-2 gap-3">
                       <DateSelectorField
                         label="夜勤希望"
                         field="req_night"
@@ -322,9 +230,9 @@ export function StaffSettingsPanel({
                     </div>
                   </div>
 
-                  <div className="border-t border-slate-200 pt-3">
-                    <label className="block text-xs font-semibold text-cyan-600 mb-2">休暇設定</label>
-                    <div className="space-y-2">
+                  <div className="border-t border-slate-200 pt-4">
+                    <label className="block text-sm font-semibold text-cyan-600 mb-3">休暇設定</label>
+                    <div className="grid grid-cols-2 gap-3">
                       <DateSelectorField
                         label="希望休"
                         field="req_off"
@@ -350,6 +258,18 @@ export function StaffSettingsPanel({
                         onClose={onCloseCalendar}
                       />
                       <DateSelectorField
+                        label="出勤希望"
+                        field="req_work"
+                        staffIndex={selectedStaffIndex}
+                        selectedDays={staff.req_work}
+                        onUpdate={(days) => onUpdateStaff(selectedStaffIndex, { req_work: days })}
+                        year={year}
+                        month={month}
+                        isOpen={openCalendar?.field === 'req_work' && openCalendar?.staffIndex === selectedStaffIndex}
+                        onOpen={() => onOpenCalendar('req_work', selectedStaffIndex)}
+                        onClose={onCloseCalendar}
+                      />
+                      <DateSelectorField
                         label="リ休"
                         field="refresh_days"
                         staffIndex={selectedStaffIndex}
@@ -366,10 +286,10 @@ export function StaffSettingsPanel({
                 </div>
 
                 {/* 決定ボタン */}
-                <div className="border-t border-slate-200 pt-3 mt-3">
+                <div className="border-t border-slate-200 pt-4 mt-4">
                   <button
                     onClick={() => onSelectStaff(null)}
-                    className="w-full px-3 py-2 bg-emerald-500 text-white rounded-lg font-semibold text-sm hover:bg-emerald-600 transition-colors"
+                    className="w-full px-4 py-2.5 bg-emerald-500 text-white rounded-lg font-semibold hover:bg-emerald-600 transition-colors"
                   >
                     ✓ 決定
                   </button>
