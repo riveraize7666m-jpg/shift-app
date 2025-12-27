@@ -354,33 +354,41 @@ export default function Home() {
                 <p className="text-sm">年月と常勤スタッフの公休数を設定します。</p>
               </div>
               <div>
-                <h3 className="font-bold text-slate-800 mb-1">2. スタッフ追加</h3>
-                <p className="text-sm">「+ 追加」ボタンでスタッフを追加し、名前・属性・希望シフトを設定します。</p>
+                <h3 className="font-bold text-slate-800 mb-1">2. スタッフを追加して設定</h3>
+                <p className="text-sm mb-2">「+ 追加」ボタンでスタッフを追加し、以下の順番で設定していきます：</p>
+                <ol className="text-sm space-y-1.5 ml-4 list-decimal">
+                  <li><strong>常勤かパートかを選択</strong></li>
+                  <li><strong>前月末のシフトを入力</strong>し、<strong>前月末までの連勤数を入力</strong></li>
+                  <li><strong>夜勤目標回数を入力</strong></li>
+                  <li><strong>「希望シフト」</strong>は、特定の日に特定のシフトを指定したい場合に入力します。特に人員が不足しそうな日はあらかじめ手動でシフトを決めておくと出力が安定して手直しが少なくなります。</li>
+                  <li><strong>「休暇設定」</strong>で、希望休、有給休暇、リフレッシュ休暇を入力</li>
+                  <li><strong>決定ボタンを押す</strong></li>
+                </ol>
+                <p className="text-sm mt-2">これを繰り返してスタッフを追加していきます。</p>
               </div>
               <div>
-                <h3 className="font-bold text-slate-800 mb-1">3. シフト作成</h3>
-                <p className="text-sm">「シフトを作成」ボタンを押すと、ルールに基づいてシフト表が自動生成されます。</p>
+                <h3 className="font-bold text-slate-800 mb-1">3. シフトを作成</h3>
+                <p className="text-sm">すべて入力したら「シフトを作成」ボタンを押すとシフトが作成されます。</p>
               </div>
               <div>
-                <h3 className="font-bold text-slate-800 mb-1">4. CSVダウンロード</h3>
-                <p className="text-sm">作成したシフト表はCSVファイルでダウンロードできます。</p>
+                <h3 className="font-bold text-slate-800 mb-1">4. 確認ポイントをチェックしてリトライ</h3>
+                <p className="text-sm">出力されたシフト表の上部に「確認ポイント」が表示されるので、なるべく件数が少なくなるまで何度かリトライします。目視でチェックしてOKなら次のステップへ進みます。</p>
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-800 mb-1">5. CSVダウンロード</h3>
+                <p className="text-sm">CSVでダウンロードします。ダウンロードしたCSVファイルを開いて、あなたの施設のフォーマット（ExcelやGoogleスプレッドシートなど）にコピペしてください。その際、「<strong>貼り付け先の書式に合わせる</strong>」を選択して貼り付けてください。</p>
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-800 mb-1">6. 必要に応じて手直し</h3>
+                <p className="text-sm">施設のフォーマット上で気になるところを手直しすればシフトの完成です。</p>
               </div>
               <div className="pt-2 border-t border-slate-200">
                 <h3 className="font-bold text-slate-800 mb-1">💡 ヒント</h3>
-                <p className="text-sm">設定ファイルを保存しておくと、翌月のシフト作成が楽になります。</p>
-              </div>
-              <div className="pt-3 border-t border-slate-200">
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                  <h3 className="font-bold text-amber-800 mb-2 flex items-center gap-1.5">
-                    <span>⚠️</span>
-                    ご利用にあたっての注意点
-                  </h3>
-                  <ul className="text-sm text-amber-900 space-y-1.5">
-                    <li>• シフト作成は<strong>複数回お試しください</strong>。毎回異なるパターンが生成されます。</li>
-                    <li>• 生成後に表示される「<strong>確認ポイント</strong>」をチェックし、最も良い結果を採用してください。</li>
-                    <li>• 本ツールは<strong>下書き作成を目的</strong>としています。すべてのルールを100%満たす完璧なシフトは構造上作成が困難なため、<strong>手直しが必要</strong>な場合があります。</li>
-                  </ul>
-                </div>
+                <p className="text-sm mb-2">設定ファイルを保存しておくと、翌月のシフト作成が楽になります。設定ファイルには2種類あります：</p>
+                <ul className="text-sm space-y-1.5 ml-4">
+                  <li>• <strong>名前のみ</strong>：スタッフ名のみを保存します。翌月からスタッフを追加しなくてもいいので、<strong>通常はこちらを推奨</strong>します。</li>
+                  <li>• <strong>全設定</strong>：月の指定まで含めたすべての設定を保存します。シフト作成を翌日に持ち越す場合などに向いています。</li>
+                </ul>
               </div>
             </div>
             <button
